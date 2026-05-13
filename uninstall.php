@@ -5,7 +5,7 @@
  * Removes plugin data when the plugin is uninstalled.
  *
  * @package Swift_CSV
- * @since  0.9.4
+ * @since   0.9.4
  */
 
 // Exit if accessed directly.
@@ -21,7 +21,7 @@ if ( ! defined( 'SWIFT_CSV_PLUGIN_DIR' ) ) {
 /**
  * Clean up plugin data
  *
- * @since 0.9.4
+ * @since  0.9.4
  * @return void
  */
 function swift_csv_uninstall() {
@@ -36,13 +36,15 @@ function swift_csv_uninstall() {
 	if ( ! $remove_all_data ) {
 		// User chose to preserve data, only delete custom table.
 		$table_name = $wpdb->prefix . 'swift_csv_batches';
-		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table_name ) );
+		include_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( "DROP TABLE IF EXISTS $table_name" );
 		return;
 	}
 
 	// Delete custom table.
 	$table_name = $wpdb->prefix . 'swift_csv_batches';
-	$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table_name ) );
+	include_once ABSPATH . 'wp-admin/includes/upgrade.php';
+	dbDelta( "DROP TABLE IF EXISTS $table_name" );
 
 	// Delete plugin options.
 	$options = [
@@ -59,8 +61,19 @@ function swift_csv_uninstall() {
 
 	// Delete transients
 	// Note: WordPress automatically cleans expired transients, but we clean them explicitly
-	$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_swift_csv_%'" );
-	$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_timeout_swift_csv_%'" );
+	global $wpdb;
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+	$wpdb->delete(
+		$wpdb->options,
+		[ 'option_name' => '_transient_swift_csv_%' ],
+		[ 'option_name' => 'LIKE' ]
+	);
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+	$wpdb->delete(
+		$wpdb->options,
+		[ 'option_name' => '_transient_timeout_swift_csv_%' ],
+		[ 'option_name' => 'LIKE' ]
+	);
 
 	// Clear any cached data
 	wp_cache_flush();

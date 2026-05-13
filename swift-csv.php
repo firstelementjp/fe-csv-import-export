@@ -3,7 +3,7 @@
  * Plugin Name:  Swift CSV
  * Plugin URI:   https://github.com/firstelementjp/swift-csv
  * Description:  Simple yet powerful CSV import/export plugin for WordPress. Supports custom post types, custom taxonomies, and custom fields.
- * Version:      0.9.9.2
+ * Version:      0.9.9.3
  * Author:       Daijiro Miyazawa, FirstElement K.K.
  * Author URI:   https://www.firstelement.co.jp/
  * License:      GPL-2.0+
@@ -20,7 +20,7 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 // Define plugin constants.
-define( 'SWIFT_CSV_VERSION', '0.9.9.2' );
+define( 'SWIFT_CSV_VERSION', '0.9.9.3' );
 define( 'SWIFT_CSV_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SWIFT_CSV_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'SWIFT_CSV_BASENAME', plugin_basename( __FILE__ ) );
@@ -55,7 +55,6 @@ spl_autoload_register(
 		$sub_dir = '';
 		if ( strpos( $relative_class, 'Admin' ) !== false ||
 			strpos( $relative_class, 'License_Handler' ) !== false ||
-			strpos( $relative_class, 'Updater' ) !== false ||
 			strpos( $relative_class, 'Settings' ) !== false ||
 			strpos( $relative_class, 'Settings_Helper' ) !== false ||
 			strpos( $relative_class, 'Encryption_Utils' ) !== false ) {
@@ -95,24 +94,7 @@ register_activation_hook( __FILE__, 'swift_csv_activate' );
 register_deactivation_hook( __FILE__, 'swift_csv_deactivate' );
 
 // Initialize plugin.
-add_action( 'init', 'swift_csv_load_textdomain', 0 );
 add_action( 'plugins_loaded', 'swift_csv_init', 10 );
-
-/**
- * Load plugin textdomain
- *
- * Loads the plugin text domain for internationalization.
- *
- * @since 0.9.0
- * @return void
- */
-function swift_csv_load_textdomain() {
-	load_plugin_textdomain(
-		'swift-csv',
-		false,
-		dirname( SWIFT_CSV_BASENAME ) . '/languages'
-	);
-}
 
 /**
  * Initialize Swift CSV plugin
@@ -139,8 +121,6 @@ function swift_csv_init() {
 	}
 	new Swift_CSV_Ajax_Import_Unified();
 	new Swift_CSV_Ajax_Export_Unified();
-
-	new Swift_CSV_Updater( __FILE__ );
 }
 
 /**
