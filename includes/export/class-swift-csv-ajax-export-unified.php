@@ -90,7 +90,17 @@ class Swift_CSV_Ajax_Export_Unified {
 			return;
 		}
 
-		$precheck_result = apply_filters( 'swift_csv_pre_ajax_export', true, $_POST );
+		// Sanitize POST data before passing to filter.
+		$sanitized_post = [];
+		foreach ( $_POST as $key => $value ) {
+			if ( is_array( $value ) ) {
+				$sanitized_post[ $key ] = array_map( 'sanitize_text_field', wp_unslash( $value ) );
+			} else {
+				$sanitized_post[ $key ] = sanitize_text_field( wp_unslash( $value ) );
+			}
+		}
+
+		$precheck_result = apply_filters( 'swift_csv_pre_ajax_export', true, $sanitized_post );
 		if ( is_wp_error( $precheck_result ) ) {
 			while ( function_exists( 'ob_get_level' ) && function_exists( 'ob_end_clean' ) && ob_get_level() > $initial_ob_level ) {
 				ob_end_clean();

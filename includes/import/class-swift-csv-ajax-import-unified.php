@@ -109,7 +109,17 @@ class Swift_CSV_Ajax_Import_Unified {
 			return;
 		}
 
-		$precheck_result = apply_filters( 'swift_csv_pre_ajax_import', true, $_POST );
+		// Sanitize POST data before passing to filter.
+		$sanitized_post = [];
+		foreach ( $_POST as $key => $value ) {
+			if ( is_array( $value ) ) {
+				$sanitized_post[ $key ] = array_map( 'sanitize_text_field', wp_unslash( $value ) );
+			} else {
+				$sanitized_post[ $key ] = sanitize_text_field( wp_unslash( $value ) );
+			}
+		}
+
+		$precheck_result = apply_filters( 'swift_csv_pre_ajax_import', true, $sanitized_post );
 		if ( is_wp_error( $precheck_result ) ) {
 			$this->cleanup_output_buffers( $initial_ob_level );
 			wp_send_json_error( $precheck_result->get_error_message() );
