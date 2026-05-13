@@ -8,7 +8,7 @@
 	display: grid;
 	grid-template: 60px 2.5rem / 1fr 1fr;
 	align-items: center;
-	background-image: url(../images/bg-feas-header5@2x-min.jpg);
+	background-image: url(../images/bg-feas-header.jpg);
 	background-position: right top;
 	background-repeat: no-repeat;
 	background-size: 27%;

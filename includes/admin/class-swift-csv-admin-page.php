@@ -517,7 +517,7 @@ class Swift_CSV_Admin_Page {
 				?>
 				</div>
 				<a href="<?php echo esc_url( $site_url ); ?>" id="plugin_logo" target="_blank" title="Go to the developer's website">
-					<img src="<?php echo esc_url( SWIFT_CSV_PLUGIN_URL . 'assets/images/logo-feas-white-shadow-s@2x-min.png' ); ?>" width="106" height="27" alt="FirstElement">
+					<img src="<?php echo esc_url( SWIFT_CSV_PLUGIN_URL . 'assets/images/logo-feas-white-shadow.png' ); ?>" width="106" height="27" alt="FirstElement">
 				</a>
 			</div>
 			<div id="plugin_version">
