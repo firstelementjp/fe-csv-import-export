@@ -228,20 +228,10 @@ class Swift_CSV_Admin_Page {
 
 					<?php do_settings_fields( 'swift-csv', 'swift_csv_export_section' ); ?>
 						<?php do_action( 'swift_csv_after_export_settings_fields', $this->admin ); ?>
-						<?php
-						$is_pro_license_active = class_exists( 'Swift_CSV_License_Handler' )
-							&& is_callable( [ 'Swift_CSV_License_Handler', 'is_pro_active' ] )
-							&& Swift_CSV_License_Handler::is_pro_active();
-						$has_pro_plugin        = class_exists( 'Swift_CSV_Pro_Admin' )
-							|| class_exists( 'Swift_CSV_Pro_Ajax_Export_Handler_Direct_SQL' );
-						$sql_export_enabled    = $is_pro_license_active && $has_pro_plugin;
-						?>
 
 						<p class="submit">
 							<input type="submit" name="ajax_export_csv" class="button button-primary" id="ajax-export-csv-btn" value="<?php esc_html_e( 'Export', 'swift-csv' ); ?>">
-							<button type="button" class="button button-secondary" id="direct-sql-export-btn" style="margin-left: 10px;" <?php disabled( ! $sql_export_enabled ); ?>>
-							<?php esc_html_e( 'Export (SQL)', 'swift-csv' ); ?>
-							</button>
+							<?php do_action( 'swift_csv_after_export_button' ); ?>
 							<button type="button" class="button" id="ajax-export-cancel-btn" style="display: none;">
 					<?php esc_html_e( 'Cancel', 'swift-csv' ); ?>
 				</button>
@@ -438,15 +428,11 @@ class Swift_CSV_Admin_Page {
 								<ul>
 									<li><?php esc_html_e( 'Shared execution-only password protection for import and export operations', 'swift-csv' ); ?></li>
 									<li><?php esc_html_e( 'Require the logged-in user password at execution time', 'swift-csv' ); ?></li>
-									<li><?php esc_html_e( 'UpdraftPlus database backup before import', 'swift-csv' ); ?></li>
 									<li><?php esc_html_e( 'Access control for the tools page and execution permissions', 'swift-csv' ); ?></li>
+									<?php do_action( 'swift_csv_pro_security_features' ); ?>
 								</ul>
 							</li>
 							<li>
-								<h4><?php esc_html_e( 'Direct SQL Export Mode', 'swift-csv' ); ?></h4>
-								<ul>
-									<li><?php esc_html_e( 'Customize export queries directly for advanced workflows and integrations', 'swift-csv' ); ?></li>
-								</ul>
 								<h4><?php esc_html_e( 'Support & Updates', 'swift-csv' ); ?></h4>
 								<ul>
 									<li><?php esc_html_e( 'Dedicated customer support', 'swift-csv' ); ?></li>
