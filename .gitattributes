@@ -30,7 +30,7 @@ debug.php.example export-ignore
 .gitignore export-ignore
 .gitattributes export-ignore
 .github/ export-ignore
-swift-csv/ export-ignore
+/swift-csv/ export-ignore
 
 # Exclude documentation (keep LICENSE for release, use readme.txt for WordPress.org)
 README.md export-ignore
