@@ -428,8 +428,8 @@ class Swift_CSV_Admin_Page {
 								<ul>
 									<li><?php esc_html_e( 'Shared execution-only password protection for import and export operations', 'swift-csv' ); ?></li>
 									<li><?php esc_html_e( 'Require the logged-in user password at execution time', 'swift-csv' ); ?></li>
-									<li><?php esc_html_e( 'UpdraftPlus database backup before import', 'swift-csv' ); ?></li>
 									<li><?php esc_html_e( 'Access control for the tools page and execution permissions', 'swift-csv' ); ?></li>
+									<?php do_action( 'swift_csv_pro_security_features' ); ?>
 								</ul>
 							</li>
 							<li>
