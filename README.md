@@ -7,10 +7,6 @@
 [![WordPress](https://img.shields.io/badge/WordPress-6.6%2B-blue.svg)](https://wordpress.org/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/firstelementjp/swift-csv)
 
-## For Developers
-
-This section contains detailed information for developers working with or contributing to Swift CSV.
-
 Swift CSV is an easy-to-use WordPress plugin for importing and exporting CSV data.
 It combines a simple admin experience with extensibility through WordPress hooks.
 
