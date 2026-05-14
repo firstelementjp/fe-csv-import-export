@@ -14,8 +14,8 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 }
 
 // Define plugin constants if not already defined.
-if ( ! defined( 'SWIFT_CSV_PLUGIN_DIR' ) ) {
-	define( 'SWIFT_CSV_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+if ( ! defined( 'FE_CSV_IMPORT_EXPORT_PLUGIN_DIR' ) ) {
+	define( 'FE_CSV_IMPORT_EXPORT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 }
 
 /**
@@ -24,35 +24,35 @@ if ( ! defined( 'SWIFT_CSV_PLUGIN_DIR' ) ) {
  * @since  0.9.4
  * @return void
  */
-function swift_csv_uninstall() {
+function fe_csv_import_export_uninstall() {
 	global $wpdb;
 
 	// Check if user wants to remove all data.
 	$remove_all_data = true; // Default to true for backward compatibility.
-	if ( class_exists( 'Swift_CSV_Settings_Helper' ) ) {
-		$remove_all_data = (bool) Swift_CSV_Settings_Helper::get( 'advanced', 'uninstall_remove_all_data', true );
+	if ( class_exists( 'FE_CSV_Import_Export_Settings_Helper' ) ) {
+		$remove_all_data = (bool) FE_CSV_Import_Export_Settings_Helper::get( 'advanced', 'uninstall_remove_all_data', true );
 	}
 
 	if ( ! $remove_all_data ) {
 		// User chose to preserve data, only delete custom table.
-		$table_name = $wpdb->prefix . 'swift_csv_batches';
+		$table_name = $wpdb->prefix . 'fe_csv_import_export_batches';
 		include_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( "DROP TABLE IF EXISTS $table_name" );
 		return;
 	}
 
 	// Delete custom table.
-	$table_name = $wpdb->prefix . 'swift_csv_batches';
+	$table_name = $wpdb->prefix . 'fe_csv_import_export_batches';
 	include_once ABSPATH . 'wp-admin/includes/upgrade.php';
 	dbDelta( "DROP TABLE IF EXISTS $table_name" );
 
 	// Delete plugin options.
 	$options = [
-		'swift_csv_version',
-		'swift_csv_db_version',
-		'swift_csv_settings',
-		'swift_csv_pro_license', // Also remove license data
-		'swift_csv_encryption_key', // Remove encryption key
+		'fe_csv_import_export_version',
+		'fe_csv_import_export_db_version',
+		'fe_csv_import_export_settings',
+		'fe_csv_import_export_pro_license', // Also remove license data
+		'fe_csv_import_export_encryption_key', // Remove encryption key
 	];
 
 	foreach ( $options as $option ) {
@@ -65,13 +65,13 @@ function swift_csv_uninstall() {
     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 	$wpdb->delete(
 		$wpdb->options,
-		[ 'option_name' => '_transient_swift_csv_%' ],
+		[ 'option_name' => '_transient_fe_csv_import_export_%' ],
 		[ 'option_name' => 'LIKE' ]
 	);
     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 	$wpdb->delete(
 		$wpdb->options,
-		[ 'option_name' => '_transient_timeout_swift_csv_%' ],
+		[ 'option_name' => '_transient_timeout_fe_csv_import_export_%' ],
 		[ 'option_name' => 'LIKE' ]
 	);
 
@@ -80,4 +80,4 @@ function swift_csv_uninstall() {
 }
 
 // Run uninstall cleanup
-swift_csv_uninstall();
+fe_csv_import_export_uninstall();

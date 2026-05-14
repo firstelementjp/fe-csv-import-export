@@ -72,9 +72,9 @@ Use a filter hook to specify a sample post ID for extracting custom field items 
 
 Documentation and support resources:
 
-* Documentation: https://firstelementjp.github.io/swift-csv/
-* GitHub Repository: https://github.com/firstelementjp/swift-csv
-* Issue Tracker: https://github.com/firstelementjp/swift-csv/issues
+* Documentation: https://firstelementjp.github.io/fe-csv-import-export/
+* GitHub Repository: https://github.com/firstelementjp/fe-csv-import-export
+* Issue Tracker: https://github.com/firstelementjp/fe-csv-import-export/issues
 
 Pro Version:
 
@@ -86,7 +86,7 @@ This plugin works completely on its own with the free version and provides suffi
 * You can set a shared password for import/export execution.
 * You can require users to enter their login password for import/export execution.
 
-Pro Version: https://www.firstelement.co.jp/en/products/swift-csv-import-export-plugin/
+Pro Version: https://www.firstelement.co.jp/en/products/fe-csv-import-export-import-export-plugin/
 
 == External Services ==
 
@@ -96,8 +96,8 @@ FE CSV Import & Export Pro uses an external license API service for license vali
 * License activation and deactivation
 * License status checks
 
-**Privacy Policy**: https://www.firstelement.co.jp/privacy/
-**Terms of Service**: https://www.firstelement.co.jp/terms/
+**Privacy Policy**: https://www.firstelement.co.jp/en/legal/privacy-policy/privacy-statement-eu/
+**Terms of Service**: https://www.firstelement.co.jp/en/legal/terms-of-use/fe-csv-import-export-pro/
 
 The license API service is operated by FirstElement Co., Ltd. and is used exclusively for license management purposes. No content data is transmitted to this service.
 
@@ -112,7 +112,7 @@ The license API service is operated by FirstElement Co., Ltd. and is used exclus
 
 = Manual Installation =
 
-1. Upload the `swift-csv` folder to the `/wp-content/plugins/` directory.
+1. Upload the `fe-csv-import-export` folder to the `/wp-content/plugins/` directory.
 2. Activate the plugin through the WordPress Plugins screen.
 3. Open the FE CSV Import & Export screen from the admin area.
 
