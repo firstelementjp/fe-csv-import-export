@@ -232,7 +232,7 @@ msgstr "エラー:"
 #: includes/import/class-fe-csv-import-export-import-taxonomy-writer-wp.php:174
 #, php-format
 msgid "Existing term: %1$s (ID: %2$s, taxonomy: %3$s)"
-msgstr "既存ターム: %1$s (ID: %2$s, タクソノミー: %3$s)
+msgstr "既存ターム: %1$s (ID: %2$s, タクソノミー: %3$s)"
 
 #: includes/admin/class-fe-csv-import-export-admin-page.php:117
 #: includes/admin/class-fe-csv-import-export-admin-page.php:233
