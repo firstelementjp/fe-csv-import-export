@@ -249,3 +249,75 @@ msgstr ""
 #: includes/admin/class-fe-csv-import-export-admin-settings.php:781
 msgid "Enter the license key you received at the time of purchase and press the \"Activate\" button."
 msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:415
+msgid "Unlock more with FE CSV Import & Export Pro"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:416
+msgid "With a Pro license, you can:"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:419
+msgid "ACF Integration"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:421
+msgid "Import and export ACF data while preserving field formatting"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:422
+msgid "Export taxonomy values as readable names and handle multi-value fields with pipe-separated values"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:423
+msgid "Support major ACF field types including Taxonomy, User, File, Relationship, Repeater, and Flexible Content fields"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:427
+msgid "Security"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:429
+msgid "When used with the backup plugin 'Updraft Plus', automatic SQL backup is executed during import and import begins after completion. If problems are discovered after import, you can immediately restore from backup."
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:430
+msgid "Shared execution-only password protection for import and export operations"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:431
+msgid "Require the logged-in user password at execution time"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:432
+msgid "Access control for the tools page and execution permissions"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:436
+msgid "Support & Updates"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:438
+msgid "Dedicated customer support"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:439
+msgid "Automatic updates from our update server"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:443
+msgid "Upcoming Features"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:445
+msgid "Downloadable detailed export/import operation logs"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:446
+msgid "AI (LLM)-powered data checks"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:451
+msgid "View FE CSV Import & Export Pro Details"
+msgstr ""
