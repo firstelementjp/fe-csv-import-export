@@ -7,7 +7,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fe-csv-import-"
 "export\n"
 "POT-Creation-Date: 2026-01-29T10:46:18+00:00\n"
-"PO-Revision-Date: 2026-05-14 05:58+0000\n"
+"PO-Revision-Date: 2026-05-14 06:07+0000\n"
 "Last-Translator: FirstElement K.K. <info@firstelement.co.jp>\n"
 "Language-Team: 日本語\n"
 "Language: ja\n"
@@ -126,26 +126,6 @@ msgstr "エクスポート制限"
 #: includes/admin/class-fe-csv-import-export-admin-settings.php:52
 msgid "Export Settings"
 msgstr "エクスポート設定"
-
-#: includes/admin/class-fe-csv-import-export-admin-page.php:140
-msgid "Export"
-msgstr "エクスポート"
-
-#: includes/admin/class-fe-csv-import-export-admin-settings.php:108
-msgid "Import Settings"
-msgstr "インポート設定"
-
-#: includes/admin/class-fe-csv-import-export-admin-page.php:145
-msgid "Import"
-msgstr "インポート"
-
-#: includes/admin/class-fe-csv-import-export-admin-settings.php:148
-msgid "Advanced Settings"
-msgstr "詳細設定"
-
-#: includes/admin/class-fe-csv-import-export-admin-page.php:155
-msgid "License"
-msgstr "ライセンス"
 
 #: includes/admin/class-fe-csv-import-export-admin-page.php:422
 msgid ""
