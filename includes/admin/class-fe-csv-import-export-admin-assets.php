@@ -208,6 +208,12 @@ class FE_CSV_Import_Export_Admin_Assets {
 				true
 			);
 
+			// Check if Pro license is active to enable Direct SQL export.
+			$enable_direct_sql_export = false;
+			if ( class_exists( 'FE_CSV_Import_Export_License_Handler' ) && method_exists( 'FE_CSV_Import_Export_License_Handler', 'is_pro_active' ) ) {
+				$enable_direct_sql_export = FE_CSV_Import_Export_License_Handler::is_pro_active();
+			}
+
 			wp_localize_script(
 				'fe-csv-import-export-core',
 				'feCsvImportExport',
@@ -221,6 +227,7 @@ class FE_CSV_Import_Export_Admin_Assets {
 					],
 					'hasProAdmin'           => class_exists( 'FE_CSV_Import_Export_Pro_Admin' ),
 					'enableDirectSqlImport' => (bool) apply_filters( 'fe_csv_import_export_enable_direct_sql_import', false ),
+					'enableDirectSqlExport' => $enable_direct_sql_export,
 					'maxLogEntries'         => apply_filters( 'fe_csv_import_export_max_log_entries', 30 ),
 					'exportCompleteText'    => esc_html__( 'Export Complete', 'fe-csv-import-export' ),
 					'exportFailedText'      => esc_html__( 'Export failed: ', 'fe-csv-import-export' ),
