@@ -463,7 +463,8 @@ class FE_CSV_Import_Export_License_Handler {
 			return false;
 		}
 
-		return time() > $expires_ts;
+		// Use current_time() to respect site timezone settings.
+		return current_time( 'timestamp' ) > $expires_ts;
 	}
 
 	/**
