@@ -335,7 +335,99 @@ class FE_CSV_Import_Export_License_Handler {
 			return $data['data']['activationData']['token'];
 		}
 
+		if ( isset( $data['activationData'] ) && is_array( $data['activationData'] ) ) {
+			$token = self::extract_activation_token_from_activation_list( $data['activationData'] );
+			if ( '' !== $token ) {
+				return $token;
+			}
+		}
+
+		if ( isset( $data['data'] ) && is_array( $data['data'] ) && isset( $data['data']['activationData'] ) && is_array( $data['data']['activationData'] ) ) {
+			$token = self::extract_activation_token_from_activation_list( $data['data']['activationData'] );
+			if ( '' !== $token ) {
+				return $token;
+			}
+		}
+
 		return '';
+	}
+
+	/**
+	 * Extract the latest active token from an activation data list.
+	 *
+	 * @since 0.9.8
+	 * @param array $activation_data Activation data list.
+	 * @return string
+	 */
+	private static function extract_activation_token_from_activation_list( array $activation_data ) {
+		$latest_token = '';
+		$latest_time  = 0;
+
+		foreach ( $activation_data as $activation ) {
+			if ( ! is_array( $activation ) || ! empty( $activation['deactivated_at'] ) || empty( $activation['token'] ) || ! is_string( $activation['token'] ) ) {
+				continue;
+			}
+
+			$created_at = isset( $activation['created_at'] ) ? (string) $activation['created_at'] : '';
+			$created_ts = '' !== $created_at ? strtotime( $created_at ) : 0;
+			if ( $created_ts >= $latest_time ) {
+				$latest_time  = $created_ts;
+				$latest_token = $activation['token'];
+			}
+		}
+
+		return $latest_token;
+	}
+
+	/**
+	 * Normalize a license status value from API response data.
+	 *
+	 * @since 0.9.8
+	 * @param array  $result          License API response.
+	 * @param string $fallback_status Fallback status.
+	 * @return string
+	 */
+	private static function normalize_license_status_from_result( array $result, $fallback_status = 'inactive' ) {
+		if ( isset( $result['status'] ) && is_string( $result['status'] ) && '' !== $result['status'] ) {
+			return $result['status'];
+		}
+
+		$data = isset( $result['data'] ) && is_array( $result['data'] ) ? $result['data'] : [];
+		if ( isset( $data['status'] ) ) {
+			return self::normalize_license_status_value( $data['status'], $fallback_status );
+		}
+
+		if ( isset( $data['data'] ) && is_array( $data['data'] ) && isset( $data['data']['status'] ) ) {
+			return self::normalize_license_status_value( $data['data']['status'], $fallback_status );
+		}
+
+		return $fallback_status;
+	}
+
+	/**
+	 * Normalize a raw license status value.
+	 *
+	 * @since 0.9.8
+	 * @param mixed  $status          Raw status value.
+	 * @param string $fallback_status Fallback status.
+	 * @return string
+	 */
+	private static function normalize_license_status_value( $status, $fallback_status = 'inactive' ) {
+		if ( is_string( $status ) ) {
+			$status = strtolower( trim( $status ) );
+			if ( in_array( $status, [ 'active', 'inactive', 'expired', 'disabled' ], true ) ) {
+				return 'active' === $status ? 'active' : 'inactive';
+			}
+			if ( is_numeric( $status ) ) {
+				$status = (int) $status;
+			}
+		}
+
+		if ( is_int( $status ) ) {
+			return 2 === $status ? 'active' : 'inactive';
+		}
+
+		return $fallback_status;
 	}
 
 	/**
@@ -568,7 +660,10 @@ class FE_CSV_Import_Export_License_Handler {
 		$license_data['products']                = $products;
 		$license_data['products'][ $product_id ] = [
 			'key'    => self::prepare_license_key_for_storage( $license_key ),
-			'status' => (string) ( $result['status'] ?? 'inactive' ),
+			'status' => self::normalize_license_status_from_result(
+				$result,
+				isset( $entry['status'] ) ? (string) $entry['status'] : 'inactive'
+			),
 			'data'   => $result['data'] ?? [],
 			'token'  => self::extract_activation_token( $result['data'] ?? [] ),
 		];
