@@ -45,11 +45,15 @@ class FE_CSV_Import_Export_Admin_Ajax {
 		$uninstall_remove_all_data = isset( $_POST['uninstall_remove_all_data'] )
 			&& in_array( (string) wp_unslash( $_POST['uninstall_remove_all_data'] ), [ '1', 'true' ], true );
 
+		$updraft_backup_before_import = isset( $_POST['updraft_backup_before_import'] )
+			&& in_array( (string) wp_unslash( $_POST['updraft_backup_before_import'] ), [ '1', 'true' ], true );
+
 		$result = FE_CSV_Import_Export_Settings_Helper::update_section(
 			'advanced',
 			[
-				'enable_logs'               => $enable_logs,
-				'uninstall_remove_all_data' => $uninstall_remove_all_data,
+				'enable_logs'                  => $enable_logs,
+				'uninstall_remove_all_data'    => $uninstall_remove_all_data,
+				'updraft_backup_before_import' => $updraft_backup_before_import,
 			]
 		);
 
