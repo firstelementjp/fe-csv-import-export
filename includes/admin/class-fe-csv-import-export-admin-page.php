@@ -448,9 +448,9 @@ class FE_CSV_Import_Export_Admin_Page {
 							</li>
 						</ul>
 						<?php
-						$locale      = get_locale();
-						$is_japanese = strpos( $locale, 'ja' ) === 0;
-						$pro_url     = $is_japanese
+						$current_locale = function_exists( 'determine_locale' ) ? determine_locale() : get_locale();
+						$is_japanese    = is_string( $current_locale ) && 0 === strpos( strtolower( $current_locale ), 'ja' );
+						$pro_url        = $is_japanese
 							? 'https://www.firstelement.co.jp/products/fe-csv-import-export-plugin/'
 							: 'https://www.firstelement.co.jp/en/products/fe-csv-import-export-plugin/';
 						?>
