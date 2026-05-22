@@ -2,13 +2,13 @@
 Contributors: firstelement, dxd5001
 Tags: csv, import, export, custom post types, custom fields
 Requires at least: 6.6
-Tested up to: 6.9
+Tested up to: 7.0
 Requires PHP: 8.1
 Stable tag: 0.9.9.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-FE CSV Import & Export is a powerful CSV import/export plugin for WordPress. Supports posts, custom post types, taxonomies, custom fields with batch processing.
+Import and export WordPress posts, custom post types, taxonomies, and custom fields as CSV with batch processing.
 
 == Description ==
 

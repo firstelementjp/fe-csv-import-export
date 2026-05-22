@@ -615,9 +615,6 @@ abstract class FE_CSV_Import_Export_Export_Base {
 	protected function set_performance_limits() {
 		// Increase memory limit for large exports.
 		wp_raise_memory_limit( 'admin' );
-
-		// Set time limit.
-		set_time_limit( 300 ); // 5 minutes.
 	}
 
 	/**
