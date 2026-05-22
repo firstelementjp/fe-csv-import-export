@@ -27,7 +27,7 @@ cleanup() {
 
 trap cleanup EXIT
 
-echo "Testing release process for branch: $BRANCH (tag: $TAG)"
+echo "Testing release process for branch: $BRANCH (dev)"
 
 echo "=== Build assets in working directory ==="
 npm run build >/dev/null
