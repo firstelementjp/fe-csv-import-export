@@ -50,11 +50,10 @@ jobs:
                   git archive --format=tar --prefix=fe-csv-import-export/ --worktree-attributes ${{ github.ref_name }} | tar -x -C release
 
                   # Copy built/minified assets from working directory into the release tree.
-                  mkdir -p release/fe-csv-import-export/assets/js/export/fe-csv-import-export
+                  mkdir -p release/fe-csv-import-export/assets/js
                   mkdir -p release/fe-csv-import-export/assets/css
-                  cp -f assets/js/*.min.js release/fe-csv-import-export/assets/js/ || true
+                  cp -f assets/js/fe-csv-import-export-admin.min.js release/fe-csv-import-export/assets/js/ || true
                   cp -f assets/css/*.min.css release/fe-csv-import-export/assets/css/ || true
-                  cp -f assets/js/export/fe-csv-import-export/*.min.js release/fe-csv-import-export/assets/js/export/fe-csv-import-export/ || true
 
                   cd release
                   rm -f ../${ZIP_FILE}
