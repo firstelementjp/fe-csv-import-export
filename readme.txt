@@ -74,7 +74,7 @@ This plugin works completely on its own with the free version and provides suffi
 * **Dedicated Support** - Priority customer support from the development team
 * **Automatic Updates** - Seamless updates from our update server
 
-[Pro Version](https://www.firstelement.co.jp/en/products/fe-csv-import-export-import-export-plugin/)
+[Pro Version](https://www.firstelement.co.jp/en/products/fe-csv-import-export-plugin/)
 
 == External Services ==
 
