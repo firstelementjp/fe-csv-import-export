@@ -47,19 +47,6 @@ For large imports, this plugin processes data in batches to reduce memory usage 
 
 Using filter hooks, you can output only necessary columns for external editing (e.g., title and content only) or add custom processing when exporting ACF (Advanced Custom Fields) related custom fields.
 
-== Pro Features ==
-
-FE CSV Import & Export Pro extends the free version with advanced features for power users and developers:
-
-* **ACF Integration** - Import and export ACF data while preserving field formatting. Export taxonomy values as readable names and handle multi-value fields with pipe-separated values. Support major ACF field types including Taxonomy, User, File, Relationship, Repeater, and Flexible Content fields
-* **Direct SQL Export Mode** - Customize export queries directly for advanced workflows and integrations
-* **UpdraftPlus Database Backup** - Automatic database backup before import operations for data safety
-* **Enhanced Security** - Access control for the tools page, execution permissions, shared execution-only password protection, and requirement of logged-in user password at execution time
-* **Dedicated Support** - Priority customer support from the development team
-* **Automatic Updates** - Seamless updates from our update server
-
-Pro features are available through the separate FE CSV Import & Export Pro plugin, which integrates seamlessly with the free version via WordPress hooks.
-
 Note:
 
 For custom field output, by default, the plugin picks up fields associated with the first post (first row). If the first post does not contain all necessary custom fields, those fields will be ignored. To avoid this, consider these two approaches:
@@ -80,11 +67,12 @@ Pro Version:
 
 This plugin works completely on its own with the free version and provides sufficient functionality, but when used with the Pro version, you can access these convenient features:
 
-* ACF (Advanced Custom Fields) checkbox, select box, and other custom field items can be expanded to editable values for export. ACF data can also be edited/updated in spreadsheets.
-* When used with the backup plugin 'Updraft Plus', automatic SQL backup is executed during import and import begins after completion. If problems are discovered after import, you can immediately restore from backup.
-* Import/export execution permissions can be assigned to editors in addition to administrators.
-* You can set a shared password for import/export execution.
-* You can require users to enter their login password for import/export execution.
+* **ACF Integration** - Import and export ACF data while preserving field formatting. Export taxonomy values as readable names and handle multi-value fields with pipe-separated values. Support major ACF field types including Taxonomy, User, File, Relationship, Repeater, and Flexible Content fields
+* **Direct SQL Export Mode** - Customize export queries directly for advanced workflows and integrations
+* **UpdraftPlus Database Backup** - When used with the backup plugin 'Updraft Plus', automatic SQL backup is executed during import and import begins after completion. If problems are discovered after import, you can immediately restore from backup
+* **Enhanced Security** - Import/export execution permissions can be assigned to editors in addition to administrators. You can set a shared password for import/export execution. You can require users to enter their login password for import/export execution
+* **Dedicated Support** - Priority customer support from the development team
+* **Automatic Updates** - Seamless updates from our update server
 
 Pro Version: https://www.firstelement.co.jp/en/products/fe-csv-import-export-import-export-plugin/
 
