@@ -15,7 +15,7 @@ Import and export WordPress posts, custom post types, taxonomies, and custom fie
 FE CSV Import & Export helps you import and export WordPress content as CSV from the admin area.
 It is designed for site owners who want a stress-free CSV workflow for daily operations and for developers who need extensibility through WordPress hooks.
 
-Main features:
+= Main features: =
 
 * Import and export WordPress content as CSV
 * Fast export of approximately 10,000 posts in about 15 seconds (depending on site configuration and server environment)
@@ -36,7 +36,7 @@ Main features:
 * Option to enable/disable logging (speed priority)
 * Extensibility through filter/action hooks for custom workflows
 
-FE CSV Import & Export is suitable for tasks such as:
+= FE CSV Import & Export is suitable for tasks such as: =
 
 * Bulk updating existing posts from spreadsheet data
 * Exporting content for reporting or external processing
@@ -47,23 +47,23 @@ For large imports, this plugin processes data in batches to reduce memory usage 
 
 Using filter hooks, you can output only necessary columns for external editing (e.g., title and content only) or add custom processing when exporting ACF (Advanced Custom Fields) related custom fields.
 
-Note:
+= Note: =
 
 For custom field output, by default, the plugin picks up fields associated with the first post (first row). If the first post does not contain all necessary custom fields, those fields will be ignored. To avoid this, consider these two approaches:
 
-Pattern A)
+**Pattern A**
 Create a dummy post immediately before export and fill it with dummy values for all necessary custom field items (this ensures all necessary custom field items are expanded as CSV columns)
 
-Pattern B)
+**Pattern B**
 Use a filter hook to specify a sample post ID for extracting custom field items (by specifying a post ID that contains all custom field items, you ensure all necessary custom field items are expanded as CSV columns)
 
-Documentation and support resources:
+= Documentation and support resources: =
 
 * Documentation: https://firstelementjp.github.io/fe-csv-import-export/
 * GitHub Repository: https://github.com/firstelementjp/fe-csv-import-export
 * Issue Tracker: https://github.com/firstelementjp/fe-csv-import-export/issues
 
-Pro Version:
+= Pro Version: =
 
 This plugin works completely on its own with the free version and provides sufficient functionality, but when used with the Pro version, you can access these convenient features:
 
