@@ -69,7 +69,7 @@ This plugin works completely on its own with the free version and provides suffi
 
 * **ACF Integration** - Import and export ACF data while preserving field formatting. Export taxonomy values as readable names and handle multi-value fields with pipe-separated values. Support major ACF field types including Taxonomy, User, File, Relationship, Repeater, and Flexible Content fields
 * **Direct SQL Export Mode** - Customize export queries directly for advanced workflows and integrations
-* **UpdraftPlus Database Backup** - When used with the backup plugin 'Updraft Plus', automatic SQL backup is executed during import and import begins after completion. If problems are discovered after import, you can immediately restore from backup
+* **UpdraftPlus Database Backup** - When used with the backup plugin 'UpdraftPlus', automatic SQL backup is executed during import and import begins after completion. If problems are discovered after import, you can immediately restore from backup
 * **Enhanced Security** - Import/export execution permissions can be assigned to editors in addition to administrators. You can set a shared password for import/export execution. You can require users to enter their login password for import/export execution
 * **Dedicated Support** - Priority customer support from the development team
 * **Automatic Updates** - Seamless updates from our update server
