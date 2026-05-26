@@ -73,140 +73,240 @@ class FE_CSV_Import_Export_Admin_Assets {
 				? (bool) FE_CSV_Import_Export_Settings_Helper::get( 'advanced', 'enable_logs', true )
 				: true;
 
-			$script_url = static function ( $relative_path ) use ( $suffix ) {
-				$min_path      = preg_replace( '/\.js$/', $suffix . '.js', $relative_path );
-				$preferred_fs  = FE_CSV_IMPORT_EXPORT_PLUGIN_DIR . ltrim( $min_path, '/' );
-				$fallback_path = preg_replace( '/\.js$/', '.min.js', $relative_path );
-				$fallback_fs   = FE_CSV_IMPORT_EXPORT_PLUGIN_DIR . ltrim( $fallback_path, '/' );
+			// Use bundled script for production, individual files for debug mode
+			if ( $debug_mode ) {
+				// Debug mode: load individual files for easier debugging
+				$script_url = static function ( $relative_path ) use ( $suffix ) {
+					$min_path      = preg_replace( '/\.js$/', $suffix . '.js', $relative_path );
+					$preferred_fs  = FE_CSV_IMPORT_EXPORT_PLUGIN_DIR . ltrim( $min_path, '/' );
+					$fallback_path = preg_replace( '/\.js$/', '.min.js', $relative_path );
+					$fallback_fs   = FE_CSV_IMPORT_EXPORT_PLUGIN_DIR . ltrim( $fallback_path, '/' );
 
-				if ( file_exists( $preferred_fs ) ) {
-					return FE_CSV_IMPORT_EXPORT_PLUGIN_URL . ltrim( $min_path, '/' );
-				}
-
-				// Fallback: if preferred file doesn't exist, try the opposite format.
-				if ( '' === $suffix ) {
-					// Debug mode: prefer unminified, fallback to minified.
-					if ( file_exists( $fallback_fs ) ) {
-						return FE_CSV_IMPORT_EXPORT_PLUGIN_URL . ltrim( $fallback_path, '/' );
+					if ( file_exists( $preferred_fs ) ) {
+						return FE_CSV_IMPORT_EXPORT_PLUGIN_URL . ltrim( $min_path, '/' );
 					}
-				} else {
-					// Production mode: prefer minified, fallback to unminified.
-					$unmin_path = preg_replace( '/\.js$/', '.js', $relative_path );
-					$unmin_fs   = FE_CSV_IMPORT_EXPORT_PLUGIN_DIR . ltrim( $unmin_path, '/' );
-					if ( file_exists( $unmin_fs ) ) {
-						return FE_CSV_IMPORT_EXPORT_PLUGIN_URL . ltrim( $unmin_path, '/' );
+
+					// Fallback: if preferred file doesn't exist, try the opposite format.
+					if ( '' === $suffix ) {
+						// Debug mode: prefer unminified, fallback to minified.
+						if ( file_exists( $fallback_fs ) ) {
+							return FE_CSV_IMPORT_EXPORT_PLUGIN_URL . ltrim( $fallback_path, '/' );
+						}
+					} else {
+						// Production mode: prefer minified, fallback to unminified.
+						$unmin_path = preg_replace( '/\.js$/', '.js', $relative_path );
+						$unmin_fs   = FE_CSV_IMPORT_EXPORT_PLUGIN_DIR . ltrim( $unmin_path, '/' );
+						if ( file_exists( $unmin_fs ) ) {
+							return FE_CSV_IMPORT_EXPORT_PLUGIN_URL . ltrim( $unmin_path, '/' );
+						}
 					}
-				}
 
-				// Final fallback: return original path (may result in 404).
-				return FE_CSV_IMPORT_EXPORT_PLUGIN_URL . ltrim( $relative_path, '/' );
-			};
+					// Final fallback: return original path (may result in 404).
+					return FE_CSV_IMPORT_EXPORT_PLUGIN_URL . ltrim( $relative_path, '/' );
+				};
 
-			// Core utilities (must be loaded first).
-			wp_register_script(
-				'fe-csv-import-export-core',
-				$script_url( 'assets/js/fe-csv-import-export-core.js' ),
-				[ 'wp-i18n' ],
-				FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
-				true
-			);
-
-			wp_register_script(
-				'fe-csv-import-export-export-unified-module-ajax',
-				$script_url( 'assets/js/export/fe-csv-import-export/ajax.js' ),
-				[ 'fe-csv-import-export-core' ],
-				FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
-				true
-			);
-
-			wp_register_script(
-				'fe-csv-import-export-export-unified-module-download',
-				$script_url( 'assets/js/export/fe-csv-import-export/download.js' ),
-				[ 'fe-csv-import-export-core' ],
-				FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
-				true
-			);
-
-			wp_register_script(
-				'fe-csv-import-export-export-unified-module-form',
-				$script_url( 'assets/js/export/fe-csv-import-export/form.js' ),
-				[ 'fe-csv-import-export-core' ],
-				FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
-				true
-			);
-
-			wp_register_script(
-				'fe-csv-import-export-export-unified-module-ui',
-				$script_url( 'assets/js/export/fe-csv-import-export/ui.js' ),
-				[ 'fe-csv-import-export-core' ],
-				FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
-				true
-			);
-
-			wp_register_script(
-				'fe-csv-import-export-export-unified-module-logs',
-				$script_url( 'assets/js/export/fe-csv-import-export/logs.js' ),
-				[ 'fe-csv-import-export-core', 'fe-csv-import-export-export-unified-module-ajax' ],
-				FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
-				true
-			);
-
-			wp_register_script(
-				'fe-csv-import-export-export-original',
-				$script_url( 'assets/js/export/fe-csv-import-export/original.js' ),
-				[ 'fe-csv-import-export-core', 'fe-csv-import-export-export-unified' ],
-				FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
-				true
-			);
-
-			// Export functionality.
-			wp_register_script(
-				'fe-csv-import-export-export-unified',
-				$script_url( 'assets/js/fe-csv-import-export-export-unified.js' ),
-				[
+				// Core utilities (must be loaded first).
+				wp_register_script(
 					'fe-csv-import-export-core',
+					$script_url( 'assets/js/fe-csv-import-export-core.js' ),
+					[ 'wp-i18n' ],
+					FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
+					true
+				);
+
+				wp_register_script(
 					'fe-csv-import-export-export-unified-module-ajax',
+					$script_url( 'assets/js/export/fe-csv-import-export/ajax.js' ),
+					[ 'fe-csv-import-export-core' ],
+					FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
+					true
+				);
+
+				wp_register_script(
 					'fe-csv-import-export-export-unified-module-download',
+					$script_url( 'assets/js/export/fe-csv-import-export/download.js' ),
+					[ 'fe-csv-import-export-core' ],
+					FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
+					true
+				);
+
+				wp_register_script(
 					'fe-csv-import-export-export-unified-module-form',
+					$script_url( 'assets/js/export/fe-csv-import-export/form.js' ),
+					[ 'fe-csv-import-export-core' ],
+					FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
+					true
+				);
+
+				wp_register_script(
 					'fe-csv-import-export-export-unified-module-ui',
+					$script_url( 'assets/js/export/fe-csv-import-export/ui.js' ),
+					[ 'fe-csv-import-export-core' ],
+					FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
+					true
+				);
+
+				wp_register_script(
 					'fe-csv-import-export-export-unified-module-logs',
-				],
-				FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
-				true
-			);
+					$script_url( 'assets/js/export/fe-csv-import-export/logs.js' ),
+					[ 'fe-csv-import-export-core', 'fe-csv-import-export-export-unified-module-ajax' ],
+					FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
+					true
+				);
 
-			// Import functionality.
-			wp_register_script(
-				'fe-csv-import-export-import',
-				$script_url( 'assets/js/fe-csv-import-export-import.js' ),
-				[ 'fe-csv-import-export-core' ],
-				FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
-				true
-			);
-
-			// License functionality.
-			wp_register_script(
-				'fe-csv-import-export-license',
-				$script_url( 'assets/js/fe-csv-import-export-license.js' ),
-				[ 'fe-csv-import-export-core' ],
-				FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
-				true
-			);
-
-			// Main entry point (must be loaded last).
-			wp_register_script(
-				'fe-csv-import-export-main',
-				$script_url( 'assets/js/fe-csv-import-export-main.js' ),
-				[
-					'fe-csv-import-export-core',
-					'fe-csv-import-export-export-unified',
+				wp_register_script(
 					'fe-csv-import-export-export-original',
+					$script_url( 'assets/js/export/fe-csv-import-export/original.js' ),
+					[ 'fe-csv-import-export-core', 'fe-csv-import-export-export-unified' ],
+					FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
+					true
+				);
+
+				// Export functionality.
+				wp_register_script(
+					'fe-csv-import-export-export-unified',
+					$script_url( 'assets/js/fe-csv-import-export-export-unified.js' ),
+					[
+						'fe-csv-import-export-core',
+						'fe-csv-import-export-export-unified-module-ajax',
+						'fe-csv-import-export-export-unified-module-download',
+						'fe-csv-import-export-export-unified-module-form',
+						'fe-csv-import-export-export-unified-module-ui',
+						'fe-csv-import-export-export-unified-module-logs',
+					],
+					FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
+					true
+				);
+
+				// Import functionality.
+				wp_register_script(
 					'fe-csv-import-export-import',
+					$script_url( 'assets/js/fe-csv-import-export-import.js' ),
+					[ 'fe-csv-import-export-core' ],
+					FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
+					true
+				);
+
+				// License functionality.
+				wp_register_script(
 					'fe-csv-import-export-license',
-				],
-				FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
-				true
-			);
+					$script_url( 'assets/js/fe-csv-import-export-license.js' ),
+					[ 'fe-csv-import-export-core' ],
+					FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
+					true
+				);
+
+				// Main entry point (must be loaded last).
+				wp_register_script(
+					'fe-csv-import-export-main',
+					$script_url( 'assets/js/fe-csv-import-export-main.js' ),
+					[
+						'fe-csv-import-export-core',
+						'fe-csv-import-export-export-unified',
+						'fe-csv-import-export-export-original',
+						'fe-csv-import-export-import',
+						'fe-csv-import-export-license',
+					],
+					FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
+					true
+				);
+
+				wp_enqueue_script( 'fe-csv-import-export-core' );
+				wp_enqueue_script( 'fe-csv-import-export-export-unified-module-ajax' );
+				wp_enqueue_script( 'fe-csv-import-export-export-unified-module-download' );
+				wp_enqueue_script( 'fe-csv-import-export-export-unified-module-form' );
+				wp_enqueue_script( 'fe-csv-import-export-export-unified-module-ui' );
+				wp_enqueue_script( 'fe-csv-import-export-export-unified-module-logs' );
+				wp_enqueue_script( 'fe-csv-import-export-export-unified' );
+				wp_enqueue_script( 'fe-csv-import-export-export-original' );
+				wp_enqueue_script( 'fe-csv-import-export-import' );
+				wp_enqueue_script( 'fe-csv-import-export-license' );
+				wp_enqueue_script( 'fe-csv-import-export-main' );
+			} else {
+				// Production mode: use bundled script
+				$bundle_path = 'assets/js/fe-csv-import-export-admin.min.js';
+				$bundle_fs   = FE_CSV_IMPORT_EXPORT_PLUGIN_DIR . ltrim( $bundle_path, '/' );
+
+				if ( file_exists( $bundle_fs ) ) {
+					wp_register_script(
+						'fe-csv-import-export-admin',
+						FE_CSV_IMPORT_EXPORT_PLUGIN_URL . ltrim( $bundle_path, '/' ),
+						[ 'wp-i18n' ],
+						FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
+						true
+					);
+					wp_enqueue_script( 'fe-csv-import-export-admin' );
+				} else {
+					// Fallback: if bundle doesn't exist, load individual files
+					$script_url = static function ( $relative_path ) {
+						$min_path      = preg_replace( '/\.js$/', '.min.js', $relative_path );
+						$preferred_fs  = FE_CSV_IMPORT_EXPORT_PLUGIN_DIR . ltrim( $min_path, '/' );
+						$fallback_path = preg_replace( '/\.js$/', '.js', $relative_path );
+						$fallback_fs   = FE_CSV_IMPORT_EXPORT_PLUGIN_DIR . ltrim( $fallback_path, '/' );
+
+						if ( file_exists( $preferred_fs ) ) {
+							return FE_CSV_IMPORT_EXPORT_PLUGIN_URL . ltrim( $min_path, '/' );
+						}
+
+						if ( file_exists( $fallback_fs ) ) {
+							return FE_CSV_IMPORT_EXPORT_PLUGIN_URL . ltrim( $fallback_path, '/' );
+						}
+
+						return FE_CSV_IMPORT_EXPORT_PLUGIN_URL . ltrim( $relative_path, '/' );
+					};
+
+					wp_register_script(
+						'fe-csv-import-export-core',
+						$script_url( 'assets/js/fe-csv-import-export-core.js' ),
+						[ 'wp-i18n' ],
+						FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
+						true
+					);
+
+					wp_register_script(
+						'fe-csv-import-export-export-unified',
+						$script_url( 'assets/js/fe-csv-import-export-export-unified.js' ),
+						[ 'fe-csv-import-export-core' ],
+						FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
+						true
+					);
+
+					wp_register_script(
+						'fe-csv-import-export-import',
+						$script_url( 'assets/js/fe-csv-import-export-import.js' ),
+						[ 'fe-csv-import-export-core' ],
+						FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
+						true
+					);
+
+					wp_register_script(
+						'fe-csv-import-export-license',
+						$script_url( 'assets/js/fe-csv-import-export-license.js' ),
+						[ 'fe-csv-import-export-core' ],
+						FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
+						true
+					);
+
+					wp_register_script(
+						'fe-csv-import-export-main',
+						$script_url( 'assets/js/fe-csv-import-export-main.js' ),
+						[
+							'fe-csv-import-export-core',
+							'fe-csv-import-export-export-unified',
+							'fe-csv-import-export-import',
+							'fe-csv-import-export-license',
+						],
+						FE_CSV_IMPORT_EXPORT_VERSION . '.' . time(),
+						true
+					);
+
+					wp_enqueue_script( 'fe-csv-import-export-core' );
+					wp_enqueue_script( 'fe-csv-import-export-export-unified' );
+					wp_enqueue_script( 'fe-csv-import-export-import' );
+					wp_enqueue_script( 'fe-csv-import-export-license' );
+					wp_enqueue_script( 'fe-csv-import-export-main' );
+				}
+			}
 
 			// Check if Pro license is active to enable Direct SQL export.
 			$enable_direct_sql_export = false;
@@ -214,8 +314,11 @@ class FE_CSV_Import_Export_Admin_Assets {
 				$enable_direct_sql_export = FE_CSV_Import_Export_License_Handler::is_pro_active();
 			}
 
+			// Localize script (use the main script handle based on mode)
+			$main_script_handle = $debug_mode ? 'fe-csv-import-export-core' : 'fe-csv-import-export-admin';
+
 			wp_localize_script(
-				'fe-csv-import-export-core',
+				$main_script_handle,
 				'feCsvImportExport',
 				[
 					'ajaxUrl'               => admin_url( 'admin-ajax.php' ),
@@ -317,25 +420,13 @@ class FE_CSV_Import_Export_Admin_Assets {
 			);
 
 			wp_localize_script(
-				'fe-csv-import-export-main',
+				$main_script_handle,
 				'feCsvImportExportAjax',
 				[
 					'ajaxurl' => admin_url( 'admin-ajax.php' ),
 					'nonce'   => wp_create_nonce( 'fe_csv_import_export_ajax_nonce' ),
 				]
 			);
-
-			wp_enqueue_script( 'fe-csv-import-export-core' );
-			wp_enqueue_script( 'fe-csv-import-export-export-unified-module-ajax' );
-			wp_enqueue_script( 'fe-csv-import-export-export-unified-module-download' );
-			wp_enqueue_script( 'fe-csv-import-export-export-unified-module-form' );
-			wp_enqueue_script( 'fe-csv-import-export-export-unified-module-ui' );
-			wp_enqueue_script( 'fe-csv-import-export-export-unified-module-logs' );
-			wp_enqueue_script( 'fe-csv-import-export-export-unified' );
-			wp_enqueue_script( 'fe-csv-import-export-export-original' );
-			wp_enqueue_script( 'fe-csv-import-export-import' );
-			wp_enqueue_script( 'fe-csv-import-export-license' );
-			wp_enqueue_script( 'fe-csv-import-export-main' );
 		}
 	}
 }

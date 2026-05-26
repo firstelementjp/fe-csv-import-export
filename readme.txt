@@ -15,7 +15,7 @@ Import and export WordPress posts, custom post types, taxonomies, and custom fie
 FE CSV Import & Export helps you import and export WordPress content as CSV from the admin area.
 It is designed for site owners who want a stress-free CSV workflow for daily operations and for developers who need extensibility through WordPress hooks.
 
-Main features:
+= Main features: =
 
 * Import and export WordPress content as CSV
 * Fast export of approximately 10,000 posts in about 15 seconds (depending on site configuration and server environment)
@@ -35,9 +35,8 @@ Main features:
 * Real-time progress display in the admin interface
 * Option to enable/disable logging (speed priority)
 * Extensibility through filter/action hooks for custom workflows
-* WordPress-compatible mode using WP_Query class
 
-FE CSV Import & Export is suitable for tasks such as:
+= FE CSV Import & Export is suitable for tasks such as: =
 
 * Bulk updating existing posts from spreadsheet data
 * Exporting content for reporting or external processing
@@ -48,45 +47,34 @@ For large imports, this plugin processes data in batches to reduce memory usage 
 
 Using filter hooks, you can output only necessary columns for external editing (e.g., title and content only) or add custom processing when exporting ACF (Advanced Custom Fields) related custom fields.
 
-== Pro Features ==
-
-FE CSV Import & Export Pro extends the free version with advanced features for power users and developers:
-
-* **Direct SQL Export Mode** - Customize export queries directly for advanced workflows and integrations
-* **UpdraftPlus Database Backup** - Automatic database backup before import operations for data safety
-* **Enhanced Security** - Access control for the tools page and execution permissions
-* **Dedicated Support** - Priority customer support from the development team
-* **Automatic Updates** - Seamless updates from our update server
-
-Pro features are available through the separate FE CSV Import & Export Pro plugin, which integrates seamlessly with the free version via WordPress hooks.
-
-Note:
+= Note: =
 
 For custom field output, by default, the plugin picks up fields associated with the first post (first row). If the first post does not contain all necessary custom fields, those fields will be ignored. To avoid this, consider these two approaches:
 
-Pattern A)
+**Pattern A**
 Create a dummy post immediately before export and fill it with dummy values for all necessary custom field items (this ensures all necessary custom field items are expanded as CSV columns)
 
-Pattern B)
+**Pattern B**
 Use a filter hook to specify a sample post ID for extracting custom field items (by specifying a post ID that contains all custom field items, you ensure all necessary custom field items are expanded as CSV columns)
 
-Documentation and support resources:
+= Documentation and support resources: =
 
-* Documentation: https://firstelementjp.github.io/fe-csv-import-export/
-* GitHub Repository: https://github.com/firstelementjp/fe-csv-import-export
-* Issue Tracker: https://github.com/firstelementjp/fe-csv-import-export/issues
+* [Documentation](https://firstelementjp.github.io/fe-csv-import-export/)
+* [GitHub Repository](https://github.com/firstelementjp/fe-csv-import-export)
+* [Issue Tracker](https://github.com/firstelementjp/fe-csv-import-export/issues)
 
-Pro Version:
+= Pro Version: =
 
 This plugin works completely on its own with the free version and provides sufficient functionality, but when used with the Pro version, you can access these convenient features:
 
-* ACF (Advanced Custom Fields) checkbox, select box, and other custom field items can be expanded to editable values for export. ACF data can also be edited/updated in spreadsheets.
-* When used with the backup plugin 'Updraft Plus', automatic SQL backup is executed during import and import begins after completion. If problems are discovered after import, you can immediately restore from backup.
-* Import/export execution permissions can be assigned to editors in addition to administrators.
-* You can set a shared password for import/export execution.
-* You can require users to enter their login password for import/export execution.
+* **ACF Integration** - Import and export ACF data while preserving field formatting. Export taxonomy values as readable names and handle multi-value fields with pipe-separated values. Support major ACF field types including Taxonomy, User, File, Relationship, Repeater, and Flexible Content fields
+* **Direct SQL Export Mode** - Customize export queries directly for advanced workflows and integrations
+* **UpdraftPlus Database Backup** - When used with the backup plugin 'UpdraftPlus', automatic SQL backup is executed during import and import begins after completion. If problems are discovered after import, you can immediately restore from backup
+* **Enhanced Security** - Import/export execution permissions can be assigned to editors in addition to administrators. You can set a shared password for import/export execution. You can require users to enter their login password for import/export execution
+* **Dedicated Support** - Priority customer support from the development team
+* **Automatic Updates** - Seamless updates from our update server
 
-Pro Version: https://www.firstelement.co.jp/en/products/fe-csv-import-export-import-export-plugin/
+[Pro Version](https://www.firstelement.co.jp/en/products/fe-csv-import-export-plugin/)
 
 == External Services ==
 
@@ -96,8 +84,8 @@ FE CSV Import & Export Pro uses an external license API service for license vali
 * License activation and deactivation
 * License status checks
 
-**Privacy Policy**: https://www.firstelement.co.jp/en/legal/privacy-policy/privacy-statement-eu/
-**Terms of Service**: https://www.firstelement.co.jp/en/legal/terms-of-use/fe-csv-import-export-pro/
+[Privacy Policy](https://www.firstelement.co.jp/en/legal/privacy-policy/privacy-statement-eu/)
+[Terms of Service](https://www.firstelement.co.jp/en/legal/terms-of-use/fe-csv-import-export-pro/)
 
 The license API service is operated by FirstElement K.K. and is used exclusively for license management purposes. No content data is transmitted to this service.
 
