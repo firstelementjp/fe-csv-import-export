@@ -61,7 +61,7 @@ Notes:
 
 - Use `>` for hierarchy levels.
 - Use `|` for multiple taxonomy values.
-- Missing terms may be created during import, depending on the taxonomy context.
+- When importing by term name, missing terms will be created automatically.
 
 ## Common Scenarios
 

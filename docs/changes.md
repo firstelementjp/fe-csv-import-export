@@ -7,7 +7,7 @@
 - **Bundled JavaScript files** - Bundled JavaScript files to reduce HTTP requests and improve page load performance.
 - **Updated export batch planner** - Updated export batch planner to use memory_limit for dynamic batch size calculation.
 
-## [0.9.9.3] - 2026-05-XX
+## [0.9.9.3] - 2026-05-22
 
 ### 🛠️ Maintenance
 
@@ -18,7 +18,7 @@
 - Refactored uninstall.php to use WordPress API instead of direct database calls.
 - Removed hidden files (.DS_Store, .eslintignore, .prettierignore) from distribution.
 
-## [0.9.9.2] - 2026-XX-XX
+## [0.9.9.2] - 2026-04-14
 
 ### 🛠️ Maintenance
 
