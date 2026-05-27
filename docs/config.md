@@ -93,10 +93,10 @@ Available behavior includes:
 
 FE CSV Import & Export includes hook-based extension points for:
 
-- Export headers and rows
-- Import permissions and validation
-- Import field preparation
-- Batch-size tuning
-- Feature flags and admin access control
+- CSV header customization and row data transformation (export)
+- Permission checks and data validation before import
+- Field value transformation and processing before import
+- Customization of rows processed per batch (batch size)
+- Pro feature activation and admin access control
 
 See [Developer Hooks](hooks.md) for the current hook reference.
