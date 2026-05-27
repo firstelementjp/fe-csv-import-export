@@ -60,8 +60,8 @@ Check the following:
 
 - Admin JavaScript loaded correctly
 - Browser console has no fatal errors
-- AJAX requests are completing successfully
-- You waited for the request cycle to finish before navigating away
+- AJAX requests are completing successfully (check browser developer tools > Network tab > admin-ajax.php for errors)
+- Do not navigate away from the page before export/import processing completes
 
 ### Large Files Feel Slow
 
@@ -70,7 +70,7 @@ FE CSV Import & Export already uses automatic batch processing.
 If processing is still slow:
 
 - Test with a smaller dataset first
-- Check server memory and execution limits
+- Check server memory and execution limits (PHP's max_execution_time and memory_limit)
 - Reduce the export limit if you only need a subset
 - Use dry run to validate import files before full processing
 
@@ -87,9 +87,9 @@ Check the following:
 
 Check the following:
 
-- FE CSV Import & Export Pro is installed if you expect Pro features
-- FE CSV Import & Export Pro is activated
-- License-related server configuration is valid
+- Both Free and Pro versions are installed (Free and Pro versions work together)
+- FE CSV Import & Export Pro is installed/activated
+- Pro version license authentication is complete (license keys can be obtained from the sales site's my account page)
 
 ## Debug Logging
 
