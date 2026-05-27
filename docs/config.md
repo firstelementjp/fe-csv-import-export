@@ -15,15 +15,14 @@ This page describes the current behavior of FE CSV Import & Export as implemente
 
 ### Supported Header Types
 
-- Standard WordPress post fields such as `post_title`, `post_content`, `post_status`
-- Custom fields using the `cf_` prefix
-- Taxonomy fields such as `category`, `post_tag`, and custom taxonomy names
+- Standard WordPress post fields such as `post_title`, `post_content`, `post_status` (posts table column names)
+- Columns starting with `cf_` are treated as custom fields (e.g., cf_price imports as a custom field named "price")
+- Taxonomy names such as `category`, `post_tag`, and custom taxonomy names
 
 ### Multi-value and Taxonomy Rules
 
-- Multi-value fields use `|`
-- Hierarchical taxonomy values use `>`
-- Taxonomy parsing and custom field parsing are handled automatically
+- Use `|` to separate multiple values in a single column (spaces before/after `|` do not affect functionality)
+- Use `>` to specify term hierarchy (spaces before/after `>` do not affect functionality)
 
 ## Export Configuration
 
