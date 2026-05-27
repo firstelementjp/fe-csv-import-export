@@ -74,13 +74,11 @@ During import and export, the admin UI provides:
 
 ## License and Pro Integration
 
-FE CSV Import & Export Free and FE CSV Import & Export Pro are integrated through WordPress hooks and capability checks.
+The Free and Pro versions work together. When the Pro version is installed, the following features become available:
 
-Available behavior includes:
-
-- Pro-aware admin messaging
-- License activation UI when Pro functionality is available
-- Feature flags for optional Pro behavior
+- License key activation and deactivation UI
+- Access to Pro-only features
+- Pro-aware admin messages
 
 ## Current Practical Limits
 
