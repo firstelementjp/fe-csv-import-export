@@ -79,15 +79,15 @@ fe-csv-import-export/                          # Free version (this repo)
 │   │   ├── fe-csv-import-export-import.js     # Import UI, file upload, polling, AJAX logic
 │   │   ├── fe-csv-import-export-license.js    # License activation/deactivation UI
 │   │   ├── fe-csv-import-export-main.js       # Admin entry point and module initializer
-│   │   ├── export/
-│   │   │   └── fe-csv-import-export/          # Export modules (6 files)
-│   │   │       ├── ajax.js         # Export AJAX handling
-│   │   │       ├── download.js     # File download logic
-│   │   │       ├── form.js         # Export form handling
-│   │   │       ├── logs.js         # Export log management
-│   │   │       ├── original.js     # Original export logic
-│   │   │       └── ui.js           # Export UI components
-│   │   └── *.min.js                # Minified versions (distribution only)
+│   │   ├── fe-csv-import-export-admin.min.js # Bundled minified file (distribution only)
+│   │   └── export/
+│   │       └── fe-csv-import-export/          # Export modules (6 files)
+│   │           ├── ajax.js         # Export AJAX handling
+│   │           ├── download.js     # File download logic
+│   │           ├── form.js         # Export form handling
+│   │           ├── logs.js         # Export log management
+│   │           ├── original.js     # Original export logic
+│   │           └── ui.js           # Export UI components
 │   └── css/
 │       ├── fe-csv-import-export-style.css     # Admin styles
 │       └── fe-csv-import-export-style.min.css # Minified (distribution only)
