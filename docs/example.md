@@ -109,7 +109,7 @@ This scenario is suitable for:
 
 ## Export-Oriented Example
 
-A typical export contains standard fields plus optional custom fields and taxonomy columns.
+A typical export contains WordPress core fields plus optional custom field columns and taxonomy columns.
 
 ```csv
 ID,post_title,post_content,post_status,category,post_tag,cf_price
