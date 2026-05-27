@@ -11,14 +11,14 @@
 ## 目次
 
 - [エクスポートフック](#エクスポートフック)
-  - [ヘッダー生成](#ヘッダー生成)
-  - [行生成](#行生成)
-  - [バッチ/パフォーマンス](#バッチパフォーマンス)
+    - [ヘッダー生成](#ヘッダー生成)
+    - [行生成](#行生成)
+    - [バッチ/パフォーマンス](#バッチパフォーマンス)
 - [インポートフック](#インポートフック)
-  - [権限と検証](#権限と検証)
-  - [フィールド準備とマッピング](#フィールド準備とマッピング)
-  - [バッチ処理](#バッチ処理)
-  - [ログと診断](#ログと診断)
+    - [権限と検証](#権限と検証)
+    - [フィールド準備とマッピング](#フィールド準備とマッピング)
+    - [バッチ処理](#バッチ処理)
+    - [ログと診断](#ログと診断)
 - [管理/UI フック](#管理ui-フック)
 - [機能フラグ](#機能フラグ)
 - [ベストプラクティス](#ベストプラクティス)
@@ -45,10 +45,10 @@ apply_filters('fe_csv_import_export_export_filter_taxonomy_objects', array $taxo
 
 - `$taxonomies` (`array`) `get_object_taxonomies($post_type, 'objects')` によって返されるタクソノミーオブジェクト
 - `$args` (`array`) コンテキスト引数
-  - `post_type` (`string`)
-  - `export_scope` (`string`)
-  - `include_private_meta` (`bool`)
-  - `context` (`string`) 現在 `taxonomy_objects_filter`
+    - `post_type` (`string`)
+    - `export_scope` (`string`)
+    - `include_private_meta` (`bool`)
+    - `context` (`string`) 現在 `taxonomy_objects_filter`
 
 **例:** (内部タクソノミーを除外)
 
@@ -56,7 +56,6 @@ apply_filters('fe_csv_import_export_export_filter_taxonomy_objects', array $taxo
 add_filter('fe_csv_import_export_export_filter_taxonomy_objects', 'my_swiftcsv_filter_taxonomies', 10, 2);
 
 function my_swiftcsv_filter_taxonomies($taxonomies, $args) {
-    // 英語コメントのみ
     if (!is_array($taxonomies)) {
         return [];
     }
@@ -92,8 +91,8 @@ apply_filters('fe_csv_import_export_export_sample_query_args', array $query_args
 
 - `$query_args` (`array`) サンプル ID を取得するために使用される WP クエリ引数
 - `$args` (`array`) コンテキスト引数
-  - `post_type` (`string`)
-  - `context` (`string`) 現在 `meta_discovery`
+    - `post_type` (`string`)
+    - `context` (`string`) 現在 `meta_discovery`
 
 **例:** (メタ付きの最近の投稿を優先)
 
@@ -124,10 +123,10 @@ apply_filters('fe_csv_import_export_export_classify_meta_keys', array $all_meta_
 
 - `$all_meta_keys` (`array<string>`) 生の発見されたメタキー
 - `$args` (`array`) コンテキスト
-  - `post_type` (`string`)
-  - `export_scope` (`string`)
-  - `include_private_meta` (`bool`)
-  - `context` (`string`) 現在 `meta_key_classification`
+    - `post_type` (`string`)
+    - `export_scope` (`string`)
+    - `include_private_meta` (`bool`)
+    - `context` (`string`) 現在 `meta_key_classification`
 
 **期待される戻り値:**
 
@@ -189,10 +188,10 @@ apply_filters('fe_csv_import_export_export_generate_custom_field_headers', array
 - `$headers` (`array<string>`) 空の配列から開始
 - `$classified_meta_keys` (`array`) `fe_csv_import_export_export_classify_meta_keys` の結果
 - `$args` (`array`) コンテキスト
-  - `post_type` (`string`)
-  - `export_scope` (`string`)
-  - `include_private_meta` (`bool`)
-  - `context` (`string`) 現在 `custom_field_headers_generation`
+    - `post_type` (`string`)
+    - `export_scope` (`string`)
+    - `include_private_meta` (`bool`)
+    - `context` (`string`) 現在 `custom_field_headers_generation`
 
 **例:** (許可リストのメタキーのみ)
 
@@ -283,8 +282,8 @@ apply_filters('fe_csv_import_export_export_row', array $row, int $post_id, array
 **パラメータ:**
 
 - `$row` (`array`) 行データ
-  - WP 互換エクスポートの場合: 通常、ヘッダーに合わせたインデックス配列
-  - Direct SQL エクスポートの場合: CSV に変換する前に連想配列がよく使用される
+    - WP 互換エクスポートの場合: 通常、ヘッダーに合わせたインデックス配列
+    - Direct SQL エクスポートの場合: CSV に変換する前に連想配列がよく使用される
 - `$post_id` (`int`) 投稿 ID
 - `$config` (`array`) エクスポート設定
 - `$context` (`string`) `wp_compatible`, `direct_sql`、またはスコープ値
@@ -332,8 +331,8 @@ apply_filters('fe_csv_import_export_export_process_custom_header', string $value
 - `$header` (`string`) ヘッダー名
 - `$post_id` (`int`) 投稿 ID
 - `$args` (`array`) コンテキスト
-  - `post_type` (`string`)
-  - `context` (`string`) 現在 `export_data_processing`
+    - `post_type` (`string`)
+    - `context` (`string`) 現在 `export_data_processing`
 
 **例:** (`my_permalink` ヘッダーを実装)
 

@@ -56,7 +56,6 @@ apply_filters( 'fe_csv_import_export_export_filter_taxonomy_objects', array $tax
 add_filter( 'fe_csv_import_export_export_filter_taxonomy_objects', 'my_swiftcsv_filter_taxonomies', 10, 2 );
 
 function my_swiftcsv_filter_taxonomies( $taxonomies, $args ) {
-    // English comments only.
     if ( ! is_array( $taxonomies ) ) {
         return [];
     }
