@@ -182,7 +182,7 @@ window.FECsvImportExportLicense = {
 ## Build Process
 
 ```bash
-# Build all assets
+# Build all assets (bundles JS into single minified file)
 npm run build
 
 # Watch mode for development
@@ -199,4 +199,4 @@ npm run lint:js
 ./test-release.sh
 ```
 
-After any JS/CSS changes, always rebuild minified assets for distribution and verify that build artifacts do not leave the working tree dirty unintentionally.
+The build process bundles all JavaScript files into a single `fe-csv-import-export-admin.min.js` file to reduce HTTP requests. After any JS/CSS changes, always rebuild minified assets for distribution and verify that build artifacts do not leave the working tree dirty unintentionally.
