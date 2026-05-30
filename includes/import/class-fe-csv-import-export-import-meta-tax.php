@@ -240,23 +240,8 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 		array $context,
 		array &$dry_run_log
 	): void {
-		$dry_run = (bool) ( $context['dry_run'] ?? false );
-
 		$this->apply_prepared_meta_fields_for_batch( $wpdb, $items, $context, $dry_run_log );
-
-		foreach ( $items as $item ) {
-			if ( ! is_array( $item ) ) {
-				continue;
-			}
-
-			$post_id    = (int) ( $item['post_id'] ?? 0 );
-			$taxonomies = isset( $item['taxonomies'] ) && is_array( $item['taxonomies'] ) ? $item['taxonomies'] : [];
-			if ( empty( $taxonomies ) || ( $post_id <= 0 && ! $dry_run ) ) {
-				continue;
-			}
-
-			$this->apply_taxonomies_for_post( $wpdb, $post_id, $taxonomies, $context, $dry_run_log );
-		}
+		$this->apply_prepared_taxonomies_for_batch( $items, $context, $dry_run_log );
 	}
 
 	/**
@@ -489,6 +474,97 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 		array &$dry_run_log
 	): void {
 		$this->taxonomy_writer->apply_taxonomies_for_post( $wpdb, $post_id, $taxonomies, $context, $dry_run_log );
+	}
+
+	/**
+	 * Apply prepared taxonomies for a batch.
+	 *
+	 * @since 0.9.0
+	 * @param array $items Prepared batch items.
+	 * @param array $context Context values for row processing.
+	 * @param array $dry_run_log Dry run log.
+	 * @return void
+	 */
+	private function apply_prepared_taxonomies_for_batch(
+		array $items,
+		array $context,
+		array &$dry_run_log
+	): void {
+		$dry_run                    = (bool) ( $context['dry_run'] ?? false );
+		$taxonomy_format            = (string) ( $context['taxonomy_format'] ?? 'name' );
+		$taxonomy_format_validation = isset( $context['taxonomy_format_validation'] ) && is_array( $context['taxonomy_format_validation'] ) ? $context['taxonomy_format_validation'] : [];
+		$term_id_cache              = [];
+
+		foreach ( $items as $item ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+
+			$post_id    = (int) ( $item['post_id'] ?? 0 );
+			$taxonomies = isset( $item['taxonomies'] ) && is_array( $item['taxonomies'] ) ? $item['taxonomies'] : [];
+			if ( empty( $taxonomies ) || ( $post_id <= 0 && ! $dry_run ) ) {
+				continue;
+			}
+
+			foreach ( $taxonomies as $taxonomy => $terms ) {
+				if ( ! is_string( $taxonomy ) || ! is_array( $terms ) || empty( $terms ) ) {
+					continue;
+				}
+
+				$term_ids = $this->resolve_taxonomy_term_ids_with_cache(
+					$taxonomy,
+					$terms,
+					$taxonomy_format,
+					$taxonomy_format_validation,
+					$term_id_cache
+				);
+
+				$this->apply_taxonomy_terms_to_post( $post_id, $taxonomy, $term_ids, $dry_run, $dry_run_log );
+			}
+		}
+	}
+
+	/**
+	 * Resolve taxonomy term IDs using a batch-local cache.
+	 *
+	 * @since 0.9.0
+	 * @param string             $taxonomy Taxonomy name.
+	 * @param array<int, string> $terms Term values.
+	 * @param string             $taxonomy_format Taxonomy format.
+	 * @param array              $taxonomy_format_validation Taxonomy format validation.
+	 * @param array              $term_id_cache Resolved term ID cache.
+	 * @return array<int, int>
+	 */
+	private function resolve_taxonomy_term_ids_with_cache(
+		string $taxonomy,
+		array $terms,
+		string $taxonomy_format,
+		array $taxonomy_format_validation,
+		array &$term_id_cache
+	): array {
+		$term_ids = [];
+		foreach ( $terms as $term_value ) {
+			$term_value = trim( (string) $term_value );
+			if ( '' === $term_value ) {
+				continue;
+			}
+
+			$cache_key = $taxonomy . "\n" . $taxonomy_format . "\n" . $term_value;
+			if ( ! array_key_exists( $cache_key, $term_id_cache ) ) {
+				$term_id_cache[ $cache_key ] = $this->resolve_term_ids_for_term_value(
+					$taxonomy,
+					$term_value,
+					$taxonomy_format,
+					$taxonomy_format_validation
+				);
+			}
+
+			foreach ( $term_id_cache[ $cache_key ] as $resolved_term_id ) {
+				$term_ids[] = (int) $resolved_term_id;
+			}
+		}
+
+		return array_values( array_unique( $term_ids ) );
 	}
 
 	/**
