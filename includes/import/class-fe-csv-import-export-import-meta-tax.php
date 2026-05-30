@@ -179,6 +179,87 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 	}
 
 	/**
+	 * Prepare meta fields and taxonomies for a post using explicit arguments.
+	 *
+	 * @since 0.9.0
+	 * @param int               $post_id Post ID.
+	 * @param array<int,string> $headers CSV headers.
+	 * @param array<int,string> $data CSV row data.
+	 * @param array<int,string> $allowed_post_fields Allowed WP post fields.
+	 * @return array{
+	 *   post_id: int,
+	 *   meta_fields: array<string,string>,
+	 *   taxonomies:  array<string,array<int,string>>,
+	 *   context_data: array<int,string>
+	 * }
+	 */
+	public function prepare_meta_and_taxonomies_for_row_with_args(
+		int $post_id,
+		array $headers,
+		array $data,
+		array $allowed_post_fields
+	): array {
+		$collected_fields = $this->collect_taxonomies_and_meta_fields_from_row( $headers, $data, $allowed_post_fields );
+
+		$collected_fields = apply_filters(
+			'fe_csv_import_export_import_field_mapping',
+			$collected_fields,
+			$headers,
+			$data,
+			$allowed_post_fields
+		);
+		do_action(
+			'fe_csv_import_export_import_phase_map',
+			$collected_fields,
+			$headers,
+			$data,
+			$allowed_post_fields
+		);
+
+		return [
+			'post_id'      => $post_id,
+			'meta_fields'  => $collected_fields['meta_fields'],
+			'taxonomies'   => $collected_fields['taxonomies'],
+			'context_data' => $data,
+		];
+	}
+
+	/**
+	 * Apply prepared meta fields and taxonomies for a batch.
+	 *
+	 * @since 0.9.0
+	 * @param wpdb  $wpdb WordPress database handler.
+	 * @param array $items Prepared batch items.
+	 * @param array $context Context values for row processing.
+	 * @param array $dry_run_log Dry run log.
+	 * @return void
+	 */
+	public function apply_prepared_meta_and_taxonomies_for_batch(
+		wpdb $wpdb,
+		array $items,
+		array $context,
+		array &$dry_run_log
+	): void {
+		$dry_run = (bool) ( $context['dry_run'] ?? false );
+
+		$this->apply_prepared_meta_fields_for_batch( $wpdb, $items, $context, $dry_run_log );
+
+		foreach ( $items as $item ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+
+			$post_id    = (int) ( $item['post_id'] ?? 0 );
+			$taxonomies = isset( $item['taxonomies'] ) && is_array( $item['taxonomies'] ) ? $item['taxonomies'] : [];
+			if ( empty( $taxonomies ) || ( $post_id <= 0 && ! $dry_run ) ) {
+				continue;
+			}
+
+			$this->apply_taxonomies_for_post( $wpdb, $post_id, $taxonomies, $context, $dry_run_log );
+		}
+	}
+
+	/**
 	 * Collect taxonomy fields from a CSV row.
 	 *
 	 * @since 0.9.0
@@ -549,6 +630,150 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 				],
 				[ '%d', '%s', '%s' ]
 			);
+		}
+	}
+
+	/**
+	 * Apply prepared meta fields for a batch.
+	 *
+	 * @since 0.9.0
+	 * @param wpdb  $wpdb WordPress DB instance.
+	 * @param array $items Prepared batch items.
+	 * @param array $context Context values for row processing.
+	 * @param array $dry_run_log Dry run log.
+	 * @return void
+	 */
+	private function apply_prepared_meta_fields_for_batch(
+		wpdb $wpdb,
+		array $items,
+		array $context,
+		array &$dry_run_log
+	): void {
+		$dry_run     = (bool) ( $context['dry_run'] ?? false );
+		$delete_keys = [];
+		$insert_rows = [];
+
+		foreach ( $items as $item ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+
+			$post_id     = (int) ( $item['post_id'] ?? 0 );
+			$meta_fields = isset( $item['meta_fields'] ) && is_array( $item['meta_fields'] ) ? $item['meta_fields'] : [];
+			if ( empty( $meta_fields ) || ( $post_id <= 0 && ! $dry_run ) ) {
+				continue;
+			}
+
+			foreach ( $meta_fields as $key => $value ) {
+				if ( '' === $value || null === $value ) {
+					continue;
+				}
+
+				if ( ! is_string( $value ) ) {
+					$value = maybe_serialize( $value );
+				}
+
+				if ( $dry_run ) {
+					$this->append_meta_dry_run_log( (string) $key, (string) $value, $dry_run_log );
+					continue;
+				}
+
+				$delete_keys[ $post_id . "\n" . $key ] = [
+					'post_id'  => $post_id,
+					'meta_key' => (string) $key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				];
+
+				$values = $this->get_csv_util()->split_pipe_separated_values( $value );
+				foreach ( array_map( 'trim', $values ) as $single_value ) {
+					if ( '' === $single_value ) {
+						continue;
+					}
+					$insert_rows[] = [
+						'post_id'    => $post_id,
+						'meta_key'   => (string) $key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+						'meta_value' => $single_value, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+					];
+				}
+			}
+		}
+
+		if ( $dry_run || empty( $delete_keys ) ) {
+			return;
+		}
+
+		foreach ( array_chunk( array_values( $delete_keys ), 200 ) as $delete_chunk ) {
+			$where_parts = [];
+			$params      = [];
+			foreach ( $delete_chunk as $delete_item ) {
+				$where_parts[] = '(post_id = %d AND meta_key = %s)';
+				$params[]      = (int) $delete_item['post_id'];
+				$params[]      = (string) $delete_item['meta_key'];
+			}
+
+			$sql = "DELETE FROM {$wpdb->postmeta} WHERE " . implode( ' OR ', $where_parts );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+			$wpdb->query( $wpdb->prepare( $sql, $params ) );
+		}
+
+		foreach ( array_chunk( $insert_rows, 500 ) as $insert_chunk ) {
+			$placeholders = [];
+			$params       = [];
+			foreach ( $insert_chunk as $insert_row ) {
+				$placeholders[] = '(%d, %s, %s)';
+				$params[]       = (int) $insert_row['post_id'];
+				$params[]       = (string) $insert_row['meta_key'];
+				$params[]       = (string) $insert_row['meta_value'];
+			}
+
+			if ( empty( $placeholders ) ) {
+				continue;
+			}
+
+			$sql = "INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value) VALUES " . implode( ', ', $placeholders );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+			$wpdb->query( $wpdb->prepare( $sql, $params ) );
+		}
+	}
+
+	/**
+	 * Append meta dry run log.
+	 *
+	 * @since 0.9.0
+	 * @param string $key Meta key.
+	 * @param string $value Meta value.
+	 * @param array  $dry_run_log Dry run log.
+	 * @return void
+	 */
+	private function append_meta_dry_run_log( string $key, string $value, array &$dry_run_log ): void {
+		$dry_run_log_limit = (int) apply_filters( 'fe_csv_import_export_dry_run_log_limit', 50 );
+		$values            = $this->get_csv_util()->split_pipe_separated_values( $value );
+		if ( count( $values ) > 1 ) {
+			foreach ( array_map( 'trim', $values ) as $single_value ) {
+				if ( '' === $single_value ) {
+					continue;
+				}
+				$dry_run_log[] = sprintf(
+					/* translators: 1: field name, 2: field value */
+					__( 'Custom field (multi-value): %1$s = %2$s', 'fe-csv-import-export' ),
+					$key,
+					$single_value
+				);
+				if ( count( $dry_run_log ) > $dry_run_log_limit ) {
+					$dry_run_log = array_slice( $dry_run_log, -1 * $dry_run_log_limit );
+				}
+			}
+			return;
+		}
+
+		$single_value  = trim( (string) ( $values[0] ?? '' ) );
+		$dry_run_log[] = sprintf(
+			/* translators: 1: field name, 2: field value */
+			__( 'Custom field: %1$s = %2$s', 'fe-csv-import-export' ),
+			$key,
+			$single_value
+		);
+		if ( count( $dry_run_log ) > $dry_run_log_limit ) {
+			$dry_run_log = array_slice( $dry_run_log, -1 * $dry_run_log_limit );
 		}
 	}
 
