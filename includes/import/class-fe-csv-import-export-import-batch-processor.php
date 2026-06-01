@@ -220,6 +220,32 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 			'errors'          => 0,
 			'dry_run_log'     => [],
 			'dry_run_details' => [],
+			'import_profile'  => $this->initialize_import_profile(),
+		];
+	}
+
+	/**
+	 * Initialize import profile counters.
+	 *
+	 * @since 0.9.9.5
+	 * @return array<string, float|int>
+	 */
+	private function initialize_import_profile(): array {
+		return [
+			'preload'               => 0.0,
+			'row_context'           => 0.0,
+			'row_processor'         => 0.0,
+			'success_log'           => 0.0,
+			'success_counter_guid'  => 0.0,
+			'prepare_meta_tax'      => 0.0,
+			'compat_hooks'          => 0.0,
+			'meta_apply'            => 0.0,
+			'tax_apply'             => 0.0,
+			'tax_resolve'           => 0.0,
+			'tax_set_terms'         => 0.0,
+			'tax_set_terms_calls'   => 0,
+			'tax_set_terms_skipped' => 0,
+			'rows_profiled'         => 0,
 		];
 	}
 
@@ -255,6 +281,7 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 		}
 
 		if ( isset( $csv_data['batch_lines'] ) && is_array( $csv_data['batch_lines'] ) ) {
+			$preload_started_at            = microtime( true );
 			$current_batch_data            = array_map(
 				function ( string $line ) use ( $csv_data ): array {
 					return $this->get_csv_util()->parse_csv_row( $line, (string) $csv_data['delimiter'] );
@@ -270,6 +297,7 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 					'post_type' => (string) ( $config['post_type'] ?? 'post' ),
 				]
 			);
+			$counters['import_profile']['preload'] += microtime( true ) - $preload_started_at;
 		}
 
 		wp_defer_term_counting( true );
@@ -370,7 +398,7 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 		}
 
 		$context = $this->build_row_processing_context( $config, $csv_data, $csv_data['headers'], $allowed_post_fields );
-		$meta_tax_util->apply_prepared_meta_and_taxonomies_for_batch( $wpdb, $batch_items, $context, $counters['dry_run_log'] );
+		$meta_tax_util->apply_prepared_meta_and_taxonomies_for_batch( $wpdb, $batch_items, $context, $counters['dry_run_log'], $counters['import_profile'] );
 	}
 
 	/**
@@ -415,15 +443,16 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 			return;
 		}
 
-		// Use Ajax_Import's original row processing logic.
-		$row_context = $this->build_import_row_context_from_config( $wpdb, $row_context_util, $config, $line, $delimiter, $headers, $allowed_post_fields, $parsed_data );
+		$row_context_started_at                     = microtime( true );
+		$row_context                                = $this->build_import_row_context_from_config( $wpdb, $row_context_util, $config, $line, $delimiter, $headers, $allowed_post_fields, $parsed_data );
+		$counters['import_profile']['row_context'] += microtime( true ) - $row_context_started_at;
 		if ( null === $row_context ) {
 			return;
 		}
 
 		$context = $this->build_row_processing_context( $config, $csv_data, $headers, $allowed_post_fields );
 
-		// Use the original row processor utility.
+		$row_processor_started_at = microtime( true );
 		$row_processor_util->process_row_context_with_persister(
 			$wpdb,
 			$row_context,
@@ -434,6 +463,7 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 				$this->handle_successful_row_import( $wpdb, $post_id, $is_update, $context, $counters, $meta_tax_util, $batch_items );
 			}
 		);
+		$counters['import_profile']['row_processor'] += microtime( true ) - $row_processor_started_at;
 	}
 
 	/**
@@ -501,11 +531,12 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 	 * @return void
 	 */
 	protected function handle_successful_row_import( wpdb $wpdb, int $post_id, bool $is_update, array $context, array &$counters, FE_CSV_Import_Export_Import_Meta_Tax $meta_tax_util, array &$batch_items ): void {
-		$headers              = $context['headers'];
-		$data                 = $context['data'];
-		$allowed_post_fields  = $context['allowed_post_fields'];
-		$dry_run              = $context['dry_run'];
-		$should_generate_logs = isset( $context['append_log'] ) && is_callable( $context['append_log'] );
+		$headers                = $context['headers'];
+		$data                   = $context['data'];
+		$allowed_post_fields    = $context['allowed_post_fields'];
+		$dry_run                = $context['dry_run'];
+		$should_generate_logs   = isset( $context['append_log'] ) && is_callable( $context['append_log'] );
+		$success_log_started_at = microtime( true );
 
 		if ( $should_generate_logs ) {
 			$row_number = $context['start_row'] + $counters['processed'] + 1; // Correct row number from context.
@@ -532,21 +563,26 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 
 			call_user_func( $context['append_log'], $detail );
 		}
+		$counters['import_profile']['success_log'] += microtime( true ) - $success_log_started_at;
 
+		$success_counter_started_at = microtime( true );
 		$this->get_row_processor_util()->apply_success_counters_and_guid_without_callbacks(
 			$wpdb,
 			$post_id,
 			$is_update,
 			$counters
 		);
+		$counters['import_profile']['success_counter_guid'] += microtime( true ) - $success_counter_started_at;
 
-		$result        = $meta_tax_util->prepare_meta_and_taxonomies_for_row_with_args(
+		$prepare_started_at = microtime( true );
+		$result             = $meta_tax_util->prepare_meta_and_taxonomies_for_row_with_args(
 			$post_id,
 			$headers,
 			$data,
 			$allowed_post_fields
 		);
-		$batch_items[] = $result;
+		$batch_items[]      = $result;
+		$counters['import_profile']['prepare_meta_tax'] += microtime( true ) - $prepare_started_at;
 
 		$prepare_args         = [
 			'headers'   => $headers,
@@ -555,11 +591,14 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 			'post_type' => $context['post_type'] ?? 'post',
 			'dry_run'   => $dry_run,
 		];
+		$hooks_started_at     = microtime( true );
 		$prepared_meta_fields = apply_filters( 'fe_csv_import_export_prepare_import_fields', $result['meta_fields'], $post_id, $prepare_args );
 		do_action( 'fe_csv_import_export_import_phase_map_prepared', $post_id, $prepared_meta_fields, $prepare_args );
 
 		do_action( 'fe_csv_import_export_import_phase_post_persist', $post_id, $prepared_meta_fields, $prepare_args );
 		do_action( 'fe_csv_import_export_process_custom_fields', $post_id, $prepared_meta_fields );
+		$counters['import_profile']['compat_hooks'] += microtime( true ) - $hooks_started_at;
+		++$counters['import_profile']['rows_profiled'];
 	}
 
 	/**

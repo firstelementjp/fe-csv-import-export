@@ -228,20 +228,31 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 	 * Apply prepared meta fields and taxonomies for a batch.
 	 *
 	 * @since 0.9.0
-	 * @param wpdb  $wpdb WordPress database handler.
-	 * @param array $items Prepared batch items.
-	 * @param array $context Context values for row processing.
-	 * @param array $dry_run_log Dry run log.
+	 * @param wpdb       $wpdb WordPress database handler.
+	 * @param array      $items Prepared batch items.
+	 * @param array      $context Context values for row processing.
+	 * @param array      $dry_run_log Dry run log.
+	 * @param array|null $profile Import profile counters.
 	 * @return void
 	 */
 	public function apply_prepared_meta_and_taxonomies_for_batch(
 		wpdb $wpdb,
 		array $items,
 		array $context,
-		array &$dry_run_log
+		array &$dry_run_log,
+		?array &$profile = null
 	): void {
+		if ( null === $profile ) {
+			$profile = [];
+		}
+
+		$meta_started_at = microtime( true );
 		$this->apply_prepared_meta_fields_for_batch( $wpdb, $items, $context, $dry_run_log );
-		$this->apply_prepared_taxonomies_for_batch( $items, $context, $dry_run_log );
+		$profile['meta_apply'] = (float) ( $profile['meta_apply'] ?? 0.0 ) + microtime( true ) - $meta_started_at;
+
+		$tax_started_at = microtime( true );
+		$this->apply_prepared_taxonomies_for_batch( $wpdb, $items, $context, $dry_run_log, $profile );
+		$profile['tax_apply'] = (float) ( $profile['tax_apply'] ?? 0.0 ) + microtime( true ) - $tax_started_at;
 	}
 
 	/**
@@ -466,20 +477,29 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 	 * Apply prepared taxonomies for a batch.
 	 *
 	 * @since 0.9.0
-	 * @param array $items Prepared batch items.
-	 * @param array $context Context values for row processing.
-	 * @param array $dry_run_log Dry run log.
+	 * @param wpdb       $wpdb WordPress DB instance.
+	 * @param array      $items Prepared batch items.
+	 * @param array      $context Context values for row processing.
+	 * @param array      $dry_run_log Dry run log.
+	 * @param array|null $profile Import profile counters.
 	 * @return void
 	 */
 	private function apply_prepared_taxonomies_for_batch(
+		wpdb $wpdb,
 		array $items,
 		array $context,
-		array &$dry_run_log
+		array &$dry_run_log,
+		?array &$profile = null
 	): void {
+		if ( null === $profile ) {
+			$profile = [];
+		}
+
 		$dry_run                    = (bool) ( $context['dry_run'] ?? false );
 		$taxonomy_format            = (string) ( $context['taxonomy_format'] ?? 'name' );
 		$taxonomy_format_validation = isset( $context['taxonomy_format_validation'] ) && is_array( $context['taxonomy_format_validation'] ) ? $context['taxonomy_format_validation'] : [];
 		$term_id_cache              = [];
+		$existing_term_map          = $dry_run ? [] : $this->get_existing_term_ids_for_batch( $wpdb, $items );
 
 		foreach ( $items as $item ) {
 			if ( ! is_array( $item ) ) {
@@ -497,17 +517,153 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 					continue;
 				}
 
-				$term_ids = $this->resolve_taxonomy_term_ids_with_cache(
+				$resolve_started_at     = microtime( true );
+				$term_ids               = $this->resolve_taxonomy_term_ids_with_cache(
 					$taxonomy,
 					$terms,
 					$taxonomy_format,
 					$taxonomy_format_validation,
 					$term_id_cache
 				);
+				$profile['tax_resolve'] = (float) ( $profile['tax_resolve'] ?? 0.0 ) + microtime( true ) - $resolve_started_at;
 
+				if ( ! $dry_run && $this->are_taxonomy_terms_unchanged( $existing_term_map, $post_id, $taxonomy, $term_ids ) ) {
+					$profile['tax_set_terms_skipped'] = (int) ( $profile['tax_set_terms_skipped'] ?? 0 ) + 1;
+					continue;
+				}
+
+				$set_terms_started_at = microtime( true );
 				$this->apply_taxonomy_terms_to_post( $post_id, $taxonomy, $term_ids, $dry_run, $dry_run_log );
+				$profile['tax_set_terms']       = (float) ( $profile['tax_set_terms'] ?? 0.0 ) + microtime( true ) - $set_terms_started_at;
+				$profile['tax_set_terms_calls'] = (int) ( $profile['tax_set_terms_calls'] ?? 0 ) + 1;
 			}
 		}
+	}
+
+	/**
+	 * Get existing taxonomy term IDs for all post/taxonomy pairs in a batch.
+	 *
+	 * @since 0.9.9.5
+	 * @param wpdb  $wpdb WordPress DB instance.
+	 * @param array $items Prepared batch items.
+	 * @return array<int, array<string, array<int, int>>>
+	 */
+	private function get_existing_term_ids_for_batch( wpdb $wpdb, array $items ): array {
+		$post_ids   = [];
+		$taxonomies = [];
+
+		foreach ( $items as $item ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+
+			$post_id = (int) ( $item['post_id'] ?? 0 );
+			if ( $post_id <= 0 ) {
+				continue;
+			}
+
+			$item_taxonomies = isset( $item['taxonomies'] ) && is_array( $item['taxonomies'] ) ? $item['taxonomies'] : [];
+			foreach ( $item_taxonomies as $taxonomy => $terms ) {
+				if ( ! is_string( $taxonomy ) || ! is_array( $terms ) || empty( $terms ) ) {
+					continue;
+				}
+
+				$post_ids[]   = $post_id;
+				$taxonomies[] = $taxonomy;
+			}
+		}
+
+		$post_ids   = array_values( array_unique( array_map( 'intval', $post_ids ) ) );
+		$taxonomies = array_values( array_unique( array_map( 'strval', $taxonomies ) ) );
+		if ( empty( $post_ids ) || empty( $taxonomies ) ) {
+			return [];
+		}
+
+		$post_placeholders     = implode( ',', array_fill( 0, count( $post_ids ), '%d' ) );
+		$taxonomy_placeholders = implode( ',', array_fill( 0, count( $taxonomies ), '%s' ) );
+		$query_args            = array_merge( $post_ids, $taxonomies );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$sql = "SELECT tr.object_id, tt.taxonomy, tt.term_id
+			FROM {$wpdb->term_relationships} tr
+			INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+			WHERE tr.object_id IN ({$post_placeholders})
+			AND tt.taxonomy IN ({$taxonomy_placeholders})";
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $query_args ), ARRAY_A );
+		if ( empty( $rows ) ) {
+			return [];
+		}
+
+		$existing_term_map = [];
+		foreach ( $rows as $row ) {
+			$post_id  = (int) ( $row['object_id'] ?? 0 );
+			$taxonomy = (string) ( $row['taxonomy'] ?? '' );
+			$term_id  = (int) ( $row['term_id'] ?? 0 );
+			if ( $post_id <= 0 || '' === $taxonomy || $term_id <= 0 ) {
+				continue;
+			}
+
+			if ( ! isset( $existing_term_map[ $post_id ] ) ) {
+				$existing_term_map[ $post_id ] = [];
+			}
+			if ( ! isset( $existing_term_map[ $post_id ][ $taxonomy ] ) ) {
+				$existing_term_map[ $post_id ][ $taxonomy ] = [];
+			}
+
+			$existing_term_map[ $post_id ][ $taxonomy ][] = $term_id;
+		}
+
+		foreach ( $existing_term_map as $post_id => $taxonomy_terms ) {
+			foreach ( $taxonomy_terms as $taxonomy => $term_ids ) {
+				$existing_term_map[ $post_id ][ $taxonomy ] = $this->normalize_term_ids_for_comparison( $term_ids );
+			}
+		}
+
+		return $existing_term_map;
+	}
+
+	/**
+	 * Check whether taxonomy terms are unchanged for a post.
+	 *
+	 * @since 0.9.9.5
+	 * @param array  $existing_term_map Existing term IDs by post and taxonomy.
+	 * @param int    $post_id Post ID.
+	 * @param string $taxonomy Taxonomy name.
+	 * @param array  $term_ids Resolved term IDs.
+	 * @return bool Whether the terms are unchanged.
+	 */
+	private function are_taxonomy_terms_unchanged( array $existing_term_map, int $post_id, string $taxonomy, array $term_ids ): bool {
+		$existing_term_ids = isset( $existing_term_map[ $post_id ][ $taxonomy ] ) && is_array( $existing_term_map[ $post_id ][ $taxonomy ] )
+			? $existing_term_map[ $post_id ][ $taxonomy ]
+			: [];
+		$new_term_ids      = $this->normalize_term_ids_for_comparison( $term_ids );
+
+		return $existing_term_ids === $new_term_ids;
+	}
+
+	/**
+	 * Normalize term IDs for deterministic comparison.
+	 *
+	 * @since 0.9.9.5
+	 * @param array $term_ids Term IDs.
+	 * @return array<int, int>
+	 */
+	private function normalize_term_ids_for_comparison( array $term_ids ): array {
+		$term_ids = array_values(
+			array_unique(
+				array_filter(
+					array_map( 'intval', $term_ids ),
+					static function ( int $term_id ): bool {
+						return $term_id > 0;
+					}
+				)
+			)
+		);
+		sort( $term_ids, SORT_NUMERIC );
+
+		return $term_ids;
 	}
 
 	/**

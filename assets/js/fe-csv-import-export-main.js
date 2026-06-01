@@ -5,20 +5,6 @@
  *
  */
 
-// Import core modules
-import './fe-csv-import-export-core.js';
-
-// Import export modules
-import './export/fe-csv-import-export/ajax.js';
-import './export/fe-csv-import-export/download.js';
-import './export/fe-csv-import-export/form.js';
-import './export/fe-csv-import-export/ui.js';
-import './export/fe-csv-import-export/logs.js';
-import './fe-csv-import-export-export-unified.js';
-import './export/fe-csv-import-export/original.js';
-import './fe-csv-import-export-import.js';
-import './fe-csv-import-export-license.js';
-
 /**
  * Bootstrap FE CSV Import & Export admin scripts when the DOM is ready.
  */
