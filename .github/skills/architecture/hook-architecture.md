@@ -45,8 +45,8 @@
 
 ### Header Hooks
 
-| Hook                                    | Parameters                    | Purpose                                                  |
-| --------------------------------------- | ----------------------------- | -------------------------------------------------------- |
+| Hook                                               | Parameters                    | Purpose                                                  |
+| -------------------------------------------------- | ----------------------------- | -------------------------------------------------------- |
 | `fe_csv_import_export_basic_post_fields`           | `$fields, $scope`             | Customize basic export fields (ID, title, content, etc.) |
 | `fe_csv_import_export_additional_post_fields`      | `$fields, $scope`             | Customize 'all' scope additional fields                  |
 | `fe_csv_import_export_filter_taxonomy_objects`     | `$taxonomy_objects, $args`    | Filter taxonomy objects before header creation           |
@@ -54,34 +54,35 @@
 
 ### Query Hooks
 
-| Hook                          | Parameters           | Purpose                                        |
-| ----------------------------- | -------------------- | ---------------------------------------------- |
+| Hook                                     | Parameters           | Purpose                                        |
+| ---------------------------------------- | -------------------- | ---------------------------------------------- |
 | `fe_csv_import_export_sample_query_args` | `$query_args, $args` | Customize sample post query for meta discovery |
 | `fe_csv_import_export_export_query_args` | `$query_args, $args` | Customize main export query                    |
 
 ### Import Hooks
 
-| Hook                         | Parameters                | Purpose                                |
-| ---------------------------- | ------------------------- | -------------------------------------- |
-| `fe_csv_import_export_pre_ajax_import`  | `$result, $_POST`         | Preflight import request validation    |
-| `fe_csv_import_export_user_can_import`  | `$allowed`                | Override import capability checks      |
-| `fe_csv_import_export_before_import`    | `$args`                   | Pre-import preparation                 |
-| `fe_csv_import_export_import_row`       | `$row_data, $args`        | Per-row data transformation            |
-| `fe_csv_import_export_after_import`     | `$stats, $args`           | Post-import cleanup                    |
-| `fe_csv_import_export_cancelled_import` | `$cancelled, $session_id` | Override import cancellation detection |
+| Hook                                         | Parameters                              | Purpose                                            |
+| -------------------------------------------- | --------------------------------------- | -------------------------------------------------- |
+| `fe_csv_import_export_pre_ajax_import`       | `$result, $_POST`                       | Preflight import request validation                |
+| `fe_csv_import_export_user_can_import`       | `$allowed`                              | Override import capability checks                  |
+| `fe_csv_import_export_before_import`         | `$args`                                 | Pre-import preparation                             |
+| `fe_csv_import_export_import_row`            | `$row_data, $args`                      | Per-row data transformation                        |
+| `fe_csv_import_export_after_import`          | `$stats, $args`                         | Post-import cleanup                                |
+| `fe_csv_import_export_cancelled_import`      | `$cancelled, $session_id`               | Override import cancellation detection             |
+| `fe_csv_import_export_import_max_batch_size` | `$max_batch_size, $total_rows, $config` | Customize maximum import batch size (default: 500) |
 
 ### Export Hooks
 
-| Hook                         | Parameters                | Purpose                                |
-| ---------------------------- | ------------------------- | -------------------------------------- |
+| Hook                                    | Parameters                | Purpose                                |
+| --------------------------------------- | ------------------------- | -------------------------------------- |
 | `fe_csv_import_export_pre_ajax_export`  | `$result, $_POST`         | Preflight export request validation    |
 | `fe_csv_import_export_user_can_export`  | `$allowed`                | Override export capability checks      |
 | `fe_csv_import_export_cancelled_export` | `$cancelled, $session_id` | Override export cancellation detection |
 
 ### Import Processing Hooks
 
-| Hook                                 | Parameters                          | Purpose                            |
-| ------------------------------------ | ----------------------------------- | ---------------------------------- |
+| Hook                                            | Parameters                          | Purpose                            |
+| ----------------------------------------------- | ----------------------------------- | ---------------------------------- |
 | `fe_csv_import_export_import_row_context`       | `$context, $row_data, $args`        | Customize row context creation     |
 | `fe_csv_import_export_import_persist_result`    | `$result, $post_data, $context`     | Modify post persistence result     |
 | `fe_csv_import_export_taxonomy_term_resolution` | `$term_ids, $term_value, $taxonomy` | Customize taxonomy term resolution |
