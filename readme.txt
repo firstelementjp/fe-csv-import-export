@@ -135,6 +135,14 @@ No. The free version works on its own. A Pro version is available separately for
 
 == Changelog ==
 
+= 1.0.0 =
+
+* **Taxonomy optimization for unchanged terms** - Import now skips wp_set_post_terms() calls when taxonomy terms are unchanged, significantly reducing processing time for update-heavy imports.
+* **Increased default batch size** - Default import batch size increased from 100 to 500 rows, reducing AJAX overhead for large imports.
+* **Configurable batch size limit** - New fe_csv_import_export_import_max_batch_size filter allows per-site customization of the maximum batch size.
+* **Detailed import profiling** - Added granular profiling for import phases with WP_DEBUG batch profile logging.
+* **Fixed JavaScript ES module import syntax** - Removed static ES module imports from main JS file to resolve browser syntax errors.
+
 = 0.9.9.4 =
 
 * Bundled JavaScript files to reduce HTTP requests and improve page load performance.
