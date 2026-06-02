@@ -319,7 +319,8 @@ class FE_CSV_Import_Export_Admin_Assets {
 			}
 
 			// Localize script (use the main script handle based on mode)
-			$main_script_handle = $debug_mode ? 'fe-csv-import-export-core' : 'fe-csv-import-export-admin';
+			// When forcing individual files, always use core handle
+			$main_script_handle = ( $debug_mode || $force_individual_files ) ? 'fe-csv-import-export-core' : 'fe-csv-import-export-admin';
 
 			wp_localize_script(
 				$main_script_handle,
