@@ -5,7 +5,7 @@
 > シンプル＆直感的に使えるCSVインポート/エクスポート プラグイン for WordPress
 
 [![License](https://img.shields.io/badge/license-GPL--2.0%2B-blue.svg)](legal.md)
-[![Version](https://img.shields.io/badge/version-0.9.9.4-green.svg)](https://github.com/firstelementjp/fe-csv-import-export/releases)
+[![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](https://github.com/firstelementjp/fe-csv-import-export/releases)
 [![WordPress](https://img.shields.io/badge/WordPress-6.6%2B-blue.svg)](https://wordpress.org/)
 
 FE CSV Import & Export は、管理画面から投稿データを CSV 形式でインポート/エクスポートする WordPress プラグインです。
@@ -29,11 +29,11 @@ FE CSV Import & Export は、管理画面から投稿データを CSV 形式で�
 
 ## 📥 ダウンロード
 
-[Download fe-csv-import-export-0.9.9.4.zip](https://github.com/firstelementjp/fe-csv-import-export/releases/download/v0.9.9.4/fe-csv-import-export-0.9.9.4.zip){: .download-btn }
+[Download fe-csv-import-export-1.0.zip](https://github.com/firstelementjp/fe-csv-import-export/releases/download/v1.0/fe-csv-import-export-1.0.zip){: .download-btn }
 
 ## 🚀 クイックスタート
 
-1. `fe-csv-import-export-0.9.9.4.zip` をダウンロード
+1. `fe-csv-import-export-1.0.zip` をダウンロード
 2. WordPress でプラグインをアップロードして有効化
 3. **ツール → FE CSV Import & Export** を開く
 4. まず小さなテストインポート/エクスポートを実行
