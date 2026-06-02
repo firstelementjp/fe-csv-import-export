@@ -29,7 +29,7 @@ FE CSV Import & Export is a WordPress plugin for importing and exporting post da
 
 ## 📥 Download
 
-[Download fe-csv-import-export-1.0.0.zip](https://github.com/firstelementjp/fe-csv-import-export/releases/download/v1.0.0/fe-csv-import-export-1.0.0.zip){: .download-btn }
+[Download fe-csv-import-export-1.0.zip](https://github.com/firstelementjp/fe-csv-import-export/releases/download/v1.0/fe-csv-import-export-1.0.zip){: .download-btn }
 
 ## 🚀 Quick Start
 
