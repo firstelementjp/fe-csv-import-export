@@ -4,7 +4,7 @@ set -euo pipefail
 
 BRANCH="${1:-$(git rev-parse --abbrev-ref HEAD)}"
 RELEASE_DIR="test-release"
-ZIP_NAME="fe-csv-import-export-dev.zip"
+ZIP_NAME="fe-csv-import-export-1.0.0.zip"
 GENERATED_MINIFIED_FILES=(
 	"assets/css/fe-csv-import-export-style.min.css"
 	"assets/js/export/fe-csv-import-export/ajax.min.js"

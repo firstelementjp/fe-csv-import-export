@@ -8,7 +8,7 @@
 **FE CSV Import & Export** is a WordPress plugin for CSV import/export.
 Supports custom post types, custom taxonomies, and custom fields.
 
-- **Version**: 0.9.9
+- **Version**: 1.0.0
 - **License**: GPL-2.0+
 - **PHP**: >= 8.1 (recommended)
 - **Repository**: https://github.com/firstelementjp/fe-csv-import-export

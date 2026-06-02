@@ -152,6 +152,39 @@ class FE_CSV_Import_Export_Import_WP_Compatible extends FE_CSV_Import_Export_Imp
 			$this->cleanup_import_session( $import_session );
 		}
 
+		$profile         = isset( $counters['import_profile'] ) && is_array( $counters['import_profile'] ) ? $counters['import_profile'] : [];
+		$profile_details = sprintf(
+			'start=%d size=%d processed=%d ensure=%.4fs read=%.4fs process=%.4fs total=%.4fs preload=%.4fs row_context=%.4fs row_processor=%.4fs success_log=%.4fs success_counter_guid=%.4fs prepare_meta_tax=%.4fs compat_hooks=%.4fs meta_apply=%.4fs tax_apply=%.4fs tax_resolve=%.4fs tax_set_terms=%.4fs tax_set_terms_calls=%d tax_set_terms_skipped=%d rows_profiled=%d memory_delta=%d peak=%d',
+			$start_row,
+			$batch_size,
+			(int) $counters['processed'],
+			$ensure_elapsed,
+			$read_elapsed,
+			$process_elapsed,
+			microtime( true ) - $batch_started_at,
+			(float) ( $profile['preload'] ?? 0.0 ),
+			(float) ( $profile['row_context'] ?? 0.0 ),
+			(float) ( $profile['row_processor'] ?? 0.0 ),
+			(float) ( $profile['success_log'] ?? 0.0 ),
+			(float) ( $profile['success_counter_guid'] ?? 0.0 ),
+			(float) ( $profile['prepare_meta_tax'] ?? 0.0 ),
+			(float) ( $profile['compat_hooks'] ?? 0.0 ),
+			(float) ( $profile['meta_apply'] ?? 0.0 ),
+			(float) ( $profile['tax_apply'] ?? 0.0 ),
+			(float) ( $profile['tax_resolve'] ?? 0.0 ),
+			(float) ( $profile['tax_set_terms'] ?? 0.0 ),
+			(int) ( $profile['tax_set_terms_calls'] ?? 0 ),
+			(int) ( $profile['tax_set_terms_skipped'] ?? 0 ),
+			(int) ( $profile['rows_profiled'] ?? 0 ),
+			memory_get_usage( true ) - $batch_memory_start,
+			memory_get_peak_usage( true )
+		);
+
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( '[FE CSV Import & Export] Batch profile: ' . $profile_details );
+		}
+
 		if ( $enable_logs && is_callable( $append_log ) ) {
 			$append_log(
 				[
@@ -159,18 +192,7 @@ class FE_CSV_Import_Export_Import_WP_Compatible extends FE_CSV_Import_Export_Imp
 					'status'  => 'info',
 					'row'     => $start_row + 1,
 					'title'   => 'Batch profile',
-					'details' => sprintf(
-						'start=%d size=%d processed=%d ensure=%.4fs read=%.4fs process=%.4fs total=%.4fs memory_delta=%d peak=%d',
-						$start_row,
-						$batch_size,
-						(int) $counters['processed'],
-						$ensure_elapsed,
-						$read_elapsed,
-						$process_elapsed,
-						microtime( true ) - $batch_started_at,
-						memory_get_usage( true ) - $batch_memory_start,
-						memory_get_peak_usage( true )
-					),
+					'details' => $profile_details,
 				]
 			);
 		}

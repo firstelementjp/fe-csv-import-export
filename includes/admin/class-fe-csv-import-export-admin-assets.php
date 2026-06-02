@@ -73,8 +73,12 @@ class FE_CSV_Import_Export_Admin_Assets {
 				? (bool) FE_CSV_Import_Export_Settings_Helper::get( 'advanced', 'enable_logs', true )
 				: true;
 
+			// Temporarily force individual files for both debug and production modes
+			// to resolve dialog opening issue in production mode
+			$force_individual_files = true;
+
 			// Use bundled script for production, individual files for debug mode
-			if ( $debug_mode ) {
+			if ( $debug_mode || $force_individual_files ) {
 				// Debug mode: load individual files for easier debugging
 				$script_url = static function ( $relative_path ) use ( $suffix ) {
 					$min_path      = preg_replace( '/\.js$/', $suffix . '.js', $relative_path );
@@ -315,7 +319,8 @@ class FE_CSV_Import_Export_Admin_Assets {
 			}
 
 			// Localize script (use the main script handle based on mode)
-			$main_script_handle = $debug_mode ? 'fe-csv-import-export-core' : 'fe-csv-import-export-admin';
+			// When forcing individual files, always use core handle
+			$main_script_handle = ( $debug_mode || $force_individual_files ) ? 'fe-csv-import-export-core' : 'fe-csv-import-export-admin';
 
 			wp_localize_script(
 				$main_script_handle,

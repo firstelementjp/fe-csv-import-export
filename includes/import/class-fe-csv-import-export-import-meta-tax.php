@@ -179,6 +179,83 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 	}
 
 	/**
+	 * Prepare meta fields and taxonomies for a post using explicit arguments.
+	 *
+	 * @since 0.9.0
+	 * @param int               $post_id Post ID.
+	 * @param array<int,string> $headers CSV headers.
+	 * @param array<int,string> $data CSV row data.
+	 * @param array<int,string> $allowed_post_fields Allowed WP post fields.
+	 * @return array{
+	 *   post_id: int,
+	 *   meta_fields: array<string,string>,
+	 *   taxonomies:  array<string,array<int,string>>,
+	 *   context_data: array<int,string>
+	 * }
+	 */
+	public function prepare_meta_and_taxonomies_for_row_with_args(
+		int $post_id,
+		array $headers,
+		array $data,
+		array $allowed_post_fields
+	): array {
+		$collected_fields = $this->collect_taxonomies_and_meta_fields_from_row( $headers, $data, $allowed_post_fields );
+
+		$collected_fields = apply_filters(
+			'fe_csv_import_export_import_field_mapping',
+			$collected_fields,
+			$headers,
+			$data,
+			$allowed_post_fields
+		);
+		do_action(
+			'fe_csv_import_export_import_phase_map',
+			$collected_fields,
+			$headers,
+			$data,
+			$allowed_post_fields
+		);
+
+		return [
+			'post_id'      => $post_id,
+			'meta_fields'  => $collected_fields['meta_fields'],
+			'taxonomies'   => $collected_fields['taxonomies'],
+			'context_data' => $data,
+		];
+	}
+
+	/**
+	 * Apply prepared meta fields and taxonomies for a batch.
+	 *
+	 * @since 0.9.0
+	 * @param wpdb       $wpdb WordPress database handler.
+	 * @param array      $items Prepared batch items.
+	 * @param array      $context Context values for row processing.
+	 * @param array      $dry_run_log Dry run log.
+	 * @param array|null $profile Import profile counters.
+	 * @return void
+	 */
+	public function apply_prepared_meta_and_taxonomies_for_batch(
+		wpdb $wpdb,
+		array $items,
+		array $context,
+		array &$dry_run_log,
+		?array &$profile = null
+	): void {
+		if ( null === $profile ) {
+			$profile = [];
+		}
+
+		$meta_started_at = microtime( true );
+		$this->apply_prepared_meta_fields_for_batch( $wpdb, $items, $context, $dry_run_log );
+		$profile['meta_apply'] = (float) ( $profile['meta_apply'] ?? 0.0 ) + microtime( true ) - $meta_started_at;
+
+		$tax_started_at = microtime( true );
+		$this->apply_prepared_taxonomies_for_batch( $wpdb, $items, $context, $dry_run_log, $profile );
+		$profile['tax_apply'] = (float) ( $profile['tax_apply'] ?? 0.0 ) + microtime( true ) - $tax_started_at;
+	}
+
+	/**
 	 * Collect taxonomy fields from a CSV row.
 	 *
 	 * @since 0.9.0
@@ -219,20 +296,6 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 			$taxonomy_name                = substr( $header_name_normalized, 4 ); // Remove 'tax_'.
 			$taxonomies[ $taxonomy_name ] = $terms;
 
-			if ( taxonomy_exists( $taxonomy_name ) ) {
-				$term_ids = [];
-				foreach ( $terms as $term_name ) {
-					if ( ! empty( $term_name ) ) {
-						$term = get_term_by( 'name', $term_name, $taxonomy_name );
-						if ( $term ) {
-							$term_ids[] = $term->term_id;
-						}
-					}
-				}
-				if ( ! empty( $term_ids ) ) {
-					$taxonomy_term_ids[ $taxonomy_name ] = $term_ids;
-				}
-			}
 		}
 
 		return [
@@ -411,6 +474,242 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 	}
 
 	/**
+	 * Apply prepared taxonomies for a batch.
+	 *
+	 * @since 0.9.0
+	 * @param wpdb       $wpdb WordPress DB instance.
+	 * @param array      $items Prepared batch items.
+	 * @param array      $context Context values for row processing.
+	 * @param array      $dry_run_log Dry run log.
+	 * @param array|null $profile Import profile counters.
+	 * @return void
+	 */
+	private function apply_prepared_taxonomies_for_batch(
+		wpdb $wpdb,
+		array $items,
+		array $context,
+		array &$dry_run_log,
+		?array &$profile = null
+	): void {
+		if ( null === $profile ) {
+			$profile = [];
+		}
+
+		$dry_run                    = (bool) ( $context['dry_run'] ?? false );
+		$taxonomy_format            = (string) ( $context['taxonomy_format'] ?? 'name' );
+		$taxonomy_format_validation = isset( $context['taxonomy_format_validation'] ) && is_array( $context['taxonomy_format_validation'] ) ? $context['taxonomy_format_validation'] : [];
+		$term_id_cache              = [];
+		$existing_term_map          = $dry_run ? [] : $this->get_existing_term_ids_for_batch( $wpdb, $items );
+
+		foreach ( $items as $item ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+
+			$post_id    = (int) ( $item['post_id'] ?? 0 );
+			$taxonomies = isset( $item['taxonomies'] ) && is_array( $item['taxonomies'] ) ? $item['taxonomies'] : [];
+			if ( empty( $taxonomies ) || ( $post_id <= 0 && ! $dry_run ) ) {
+				continue;
+			}
+
+			foreach ( $taxonomies as $taxonomy => $terms ) {
+				if ( ! is_string( $taxonomy ) || ! is_array( $terms ) || empty( $terms ) ) {
+					continue;
+				}
+
+				$resolve_started_at     = microtime( true );
+				$term_ids               = $this->resolve_taxonomy_term_ids_with_cache(
+					$taxonomy,
+					$terms,
+					$taxonomy_format,
+					$taxonomy_format_validation,
+					$term_id_cache
+				);
+				$profile['tax_resolve'] = (float) ( $profile['tax_resolve'] ?? 0.0 ) + microtime( true ) - $resolve_started_at;
+
+				if ( ! $dry_run && $this->are_taxonomy_terms_unchanged( $existing_term_map, $post_id, $taxonomy, $term_ids ) ) {
+					$profile['tax_set_terms_skipped'] = (int) ( $profile['tax_set_terms_skipped'] ?? 0 ) + 1;
+					continue;
+				}
+
+				$set_terms_started_at = microtime( true );
+				$this->apply_taxonomy_terms_to_post( $post_id, $taxonomy, $term_ids, $dry_run, $dry_run_log );
+				$profile['tax_set_terms']       = (float) ( $profile['tax_set_terms'] ?? 0.0 ) + microtime( true ) - $set_terms_started_at;
+				$profile['tax_set_terms_calls'] = (int) ( $profile['tax_set_terms_calls'] ?? 0 ) + 1;
+			}
+		}
+	}
+
+	/**
+	 * Get existing taxonomy term IDs for all post/taxonomy pairs in a batch.
+	 *
+	 * @since 0.9.9.5
+	 * @param wpdb  $wpdb WordPress DB instance.
+	 * @param array $items Prepared batch items.
+	 * @return array<int, array<string, array<int, int>>>
+	 */
+	private function get_existing_term_ids_for_batch( wpdb $wpdb, array $items ): array {
+		$post_ids   = [];
+		$taxonomies = [];
+
+		foreach ( $items as $item ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+
+			$post_id = (int) ( $item['post_id'] ?? 0 );
+			if ( $post_id <= 0 ) {
+				continue;
+			}
+
+			$item_taxonomies = isset( $item['taxonomies'] ) && is_array( $item['taxonomies'] ) ? $item['taxonomies'] : [];
+			foreach ( $item_taxonomies as $taxonomy => $terms ) {
+				if ( ! is_string( $taxonomy ) || ! is_array( $terms ) || empty( $terms ) ) {
+					continue;
+				}
+
+				$post_ids[]   = $post_id;
+				$taxonomies[] = $taxonomy;
+			}
+		}
+
+		$post_ids   = array_values( array_unique( array_map( 'intval', $post_ids ) ) );
+		$taxonomies = array_values( array_unique( array_map( 'strval', $taxonomies ) ) );
+		if ( empty( $post_ids ) || empty( $taxonomies ) ) {
+			return [];
+		}
+
+		$post_placeholders     = implode( ',', array_fill( 0, count( $post_ids ), '%d' ) );
+		$taxonomy_placeholders = implode( ',', array_fill( 0, count( $taxonomies ), '%s' ) );
+		$query_args            = array_merge( $post_ids, $taxonomies );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$sql = "SELECT tr.object_id, tt.taxonomy, tt.term_id
+			FROM {$wpdb->term_relationships} tr
+			INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+			WHERE tr.object_id IN ({$post_placeholders})
+			AND tt.taxonomy IN ({$taxonomy_placeholders})";
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $query_args ), ARRAY_A );
+		if ( empty( $rows ) ) {
+			return [];
+		}
+
+		$existing_term_map = [];
+		foreach ( $rows as $row ) {
+			$post_id  = (int) ( $row['object_id'] ?? 0 );
+			$taxonomy = (string) ( $row['taxonomy'] ?? '' );
+			$term_id  = (int) ( $row['term_id'] ?? 0 );
+			if ( $post_id <= 0 || '' === $taxonomy || $term_id <= 0 ) {
+				continue;
+			}
+
+			if ( ! isset( $existing_term_map[ $post_id ] ) ) {
+				$existing_term_map[ $post_id ] = [];
+			}
+			if ( ! isset( $existing_term_map[ $post_id ][ $taxonomy ] ) ) {
+				$existing_term_map[ $post_id ][ $taxonomy ] = [];
+			}
+
+			$existing_term_map[ $post_id ][ $taxonomy ][] = $term_id;
+		}
+
+		foreach ( $existing_term_map as $post_id => $taxonomy_terms ) {
+			foreach ( $taxonomy_terms as $taxonomy => $term_ids ) {
+				$existing_term_map[ $post_id ][ $taxonomy ] = $this->normalize_term_ids_for_comparison( $term_ids );
+			}
+		}
+
+		return $existing_term_map;
+	}
+
+	/**
+	 * Check whether taxonomy terms are unchanged for a post.
+	 *
+	 * @since 0.9.9.5
+	 * @param array  $existing_term_map Existing term IDs by post and taxonomy.
+	 * @param int    $post_id Post ID.
+	 * @param string $taxonomy Taxonomy name.
+	 * @param array  $term_ids Resolved term IDs.
+	 * @return bool Whether the terms are unchanged.
+	 */
+	private function are_taxonomy_terms_unchanged( array $existing_term_map, int $post_id, string $taxonomy, array $term_ids ): bool {
+		$existing_term_ids = isset( $existing_term_map[ $post_id ][ $taxonomy ] ) && is_array( $existing_term_map[ $post_id ][ $taxonomy ] )
+			? $existing_term_map[ $post_id ][ $taxonomy ]
+			: [];
+		$new_term_ids      = $this->normalize_term_ids_for_comparison( $term_ids );
+
+		return $existing_term_ids === $new_term_ids;
+	}
+
+	/**
+	 * Normalize term IDs for deterministic comparison.
+	 *
+	 * @since 0.9.9.5
+	 * @param array $term_ids Term IDs.
+	 * @return array<int, int>
+	 */
+	private function normalize_term_ids_for_comparison( array $term_ids ): array {
+		$term_ids = array_values(
+			array_unique(
+				array_filter(
+					array_map( 'intval', $term_ids ),
+					static function ( int $term_id ): bool {
+						return $term_id > 0;
+					}
+				)
+			)
+		);
+		sort( $term_ids, SORT_NUMERIC );
+
+		return $term_ids;
+	}
+
+	/**
+	 * Resolve taxonomy term IDs using a batch-local cache.
+	 *
+	 * @since 0.9.0
+	 * @param string             $taxonomy Taxonomy name.
+	 * @param array<int, string> $terms Term values.
+	 * @param string             $taxonomy_format Taxonomy format.
+	 * @param array              $taxonomy_format_validation Taxonomy format validation.
+	 * @param array              $term_id_cache Resolved term ID cache.
+	 * @return array<int, int>
+	 */
+	private function resolve_taxonomy_term_ids_with_cache(
+		string $taxonomy,
+		array $terms,
+		string $taxonomy_format,
+		array $taxonomy_format_validation,
+		array &$term_id_cache
+	): array {
+		$term_ids = [];
+		foreach ( $terms as $term_value ) {
+			$term_value = trim( (string) $term_value );
+			if ( '' === $term_value ) {
+				continue;
+			}
+
+			$cache_key = $taxonomy . "\n" . $taxonomy_format . "\n" . $term_value;
+			if ( ! array_key_exists( $cache_key, $term_id_cache ) ) {
+				$term_id_cache[ $cache_key ] = $this->resolve_term_ids_for_term_value(
+					$taxonomy,
+					$term_value,
+					$taxonomy_format,
+					$taxonomy_format_validation
+				);
+			}
+
+			foreach ( $term_id_cache[ $cache_key ] as $resolved_term_id ) {
+				$term_ids[] = (int) $resolved_term_id;
+			}
+		}
+
+		return array_values( array_unique( $term_ids ) );
+	}
+
+	/**
 	 * Resolve term IDs from a term value.
 	 *
 	 * @since 0.9.0
@@ -549,6 +848,150 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 				],
 				[ '%d', '%s', '%s' ]
 			);
+		}
+	}
+
+	/**
+	 * Apply prepared meta fields for a batch.
+	 *
+	 * @since 0.9.0
+	 * @param wpdb  $wpdb WordPress DB instance.
+	 * @param array $items Prepared batch items.
+	 * @param array $context Context values for row processing.
+	 * @param array $dry_run_log Dry run log.
+	 * @return void
+	 */
+	private function apply_prepared_meta_fields_for_batch(
+		wpdb $wpdb,
+		array $items,
+		array $context,
+		array &$dry_run_log
+	): void {
+		$dry_run     = (bool) ( $context['dry_run'] ?? false );
+		$delete_keys = [];
+		$insert_rows = [];
+
+		foreach ( $items as $item ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+
+			$post_id     = (int) ( $item['post_id'] ?? 0 );
+			$meta_fields = isset( $item['meta_fields'] ) && is_array( $item['meta_fields'] ) ? $item['meta_fields'] : [];
+			if ( empty( $meta_fields ) || ( $post_id <= 0 && ! $dry_run ) ) {
+				continue;
+			}
+
+			foreach ( $meta_fields as $key => $value ) {
+				if ( '' === $value || null === $value ) {
+					continue;
+				}
+
+				if ( ! is_string( $value ) ) {
+					$value = maybe_serialize( $value );
+				}
+
+				if ( $dry_run ) {
+					$this->append_meta_dry_run_log( (string) $key, (string) $value, $dry_run_log );
+					continue;
+				}
+
+				$delete_keys[ $post_id . "\n" . $key ] = [
+					'post_id'  => $post_id,
+					'meta_key' => (string) $key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				];
+
+				$values = $this->get_csv_util()->split_pipe_separated_values( $value );
+				foreach ( array_map( 'trim', $values ) as $single_value ) {
+					if ( '' === $single_value ) {
+						continue;
+					}
+					$insert_rows[] = [
+						'post_id'    => $post_id,
+						'meta_key'   => (string) $key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+						'meta_value' => $single_value, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+					];
+				}
+			}
+		}
+
+		if ( $dry_run || empty( $delete_keys ) ) {
+			return;
+		}
+
+		foreach ( array_chunk( array_values( $delete_keys ), 200 ) as $delete_chunk ) {
+			$where_parts = [];
+			$params      = [];
+			foreach ( $delete_chunk as $delete_item ) {
+				$where_parts[] = '(post_id = %d AND meta_key = %s)';
+				$params[]      = (int) $delete_item['post_id'];
+				$params[]      = (string) $delete_item['meta_key'];
+			}
+
+			$sql = "DELETE FROM {$wpdb->postmeta} WHERE " . implode( ' OR ', $where_parts );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+			$wpdb->query( $wpdb->prepare( $sql, $params ) );
+		}
+
+		foreach ( array_chunk( $insert_rows, 500 ) as $insert_chunk ) {
+			$placeholders = [];
+			$params       = [];
+			foreach ( $insert_chunk as $insert_row ) {
+				$placeholders[] = '(%d, %s, %s)';
+				$params[]       = (int) $insert_row['post_id'];
+				$params[]       = (string) $insert_row['meta_key'];
+				$params[]       = (string) $insert_row['meta_value'];
+			}
+
+			if ( empty( $placeholders ) ) {
+				continue;
+			}
+
+			$sql = "INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value) VALUES " . implode( ', ', $placeholders );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+			$wpdb->query( $wpdb->prepare( $sql, $params ) );
+		}
+	}
+
+	/**
+	 * Append meta dry run log.
+	 *
+	 * @since 0.9.0
+	 * @param string $key Meta key.
+	 * @param string $value Meta value.
+	 * @param array  $dry_run_log Dry run log.
+	 * @return void
+	 */
+	private function append_meta_dry_run_log( string $key, string $value, array &$dry_run_log ): void {
+		$dry_run_log_limit = (int) apply_filters( 'fe_csv_import_export_dry_run_log_limit', 50 );
+		$values            = $this->get_csv_util()->split_pipe_separated_values( $value );
+		if ( count( $values ) > 1 ) {
+			foreach ( array_map( 'trim', $values ) as $single_value ) {
+				if ( '' === $single_value ) {
+					continue;
+				}
+				$dry_run_log[] = sprintf(
+					/* translators: 1: field name, 2: field value */
+					__( 'Custom field (multi-value): %1$s = %2$s', 'fe-csv-import-export' ),
+					$key,
+					$single_value
+				);
+				if ( count( $dry_run_log ) > $dry_run_log_limit ) {
+					$dry_run_log = array_slice( $dry_run_log, -1 * $dry_run_log_limit );
+				}
+			}
+			return;
+		}
+
+		$single_value  = trim( (string) ( $values[0] ?? '' ) );
+		$dry_run_log[] = sprintf(
+			/* translators: 1: field name, 2: field value */
+			__( 'Custom field: %1$s = %2$s', 'fe-csv-import-export' ),
+			$key,
+			$single_value
+		);
+		if ( count( $dry_run_log ) > $dry_run_log_limit ) {
+			$dry_run_log = array_slice( $dry_run_log, -1 * $dry_run_log_limit );
 		}
 	}
 

@@ -1,5 +1,20 @@
 # 📋 Changelog
 
+## [1.0.0] - 2026-06-02
+
+### 🚀 Performance Improvements
+
+- **Taxonomy optimization for unchanged terms** - Import now skips `wp_set_post_terms()` calls when taxonomy terms are unchanged, significantly reducing processing time for update-heavy imports.
+- **Increased default batch size** - Default import batch size increased from 100 to 500 rows, reducing AJAX overhead for large imports.
+- **Configurable batch size limit** - New `fe_csv_import_export_import_max_batch_size` filter allows per-site customization of the maximum batch size.
+- **Detailed import profiling** - Added granular profiling for import phases (preload, row context, row processor, meta/taxonomy preparation and application) with WP_DEBUG batch profile logging.
+
+### 🛠️ Bug Fixes
+
+- **Fixed JavaScript ES module import syntax** - Removed static ES module imports from main JS file to resolve browser syntax errors.
+
+---
+
 ## [0.9.9.4] - 2026-05-27
 
 ### 🚀 Performance Improvements

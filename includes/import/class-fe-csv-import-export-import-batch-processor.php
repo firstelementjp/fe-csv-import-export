@@ -220,6 +220,32 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 			'errors'          => 0,
 			'dry_run_log'     => [],
 			'dry_run_details' => [],
+			'import_profile'  => $this->initialize_import_profile(),
+		];
+	}
+
+	/**
+	 * Initialize import profile counters.
+	 *
+	 * @since 0.9.9.5
+	 * @return array<string, float|int>
+	 */
+	private function initialize_import_profile(): array {
+		return [
+			'preload'               => 0.0,
+			'row_context'           => 0.0,
+			'row_processor'         => 0.0,
+			'success_log'           => 0.0,
+			'success_counter_guid'  => 0.0,
+			'prepare_meta_tax'      => 0.0,
+			'compat_hooks'          => 0.0,
+			'meta_apply'            => 0.0,
+			'tax_apply'             => 0.0,
+			'tax_resolve'           => 0.0,
+			'tax_set_terms'         => 0.0,
+			'tax_set_terms_calls'   => 0,
+			'tax_set_terms_skipped' => 0,
+			'rows_profiled'         => 0,
 		];
 	}
 
@@ -255,6 +281,7 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 		}
 
 		if ( isset( $csv_data['batch_lines'] ) && is_array( $csv_data['batch_lines'] ) ) {
+			$preload_started_at            = microtime( true );
 			$current_batch_data            = array_map(
 				function ( string $line ) use ( $csv_data ): array {
 					return $this->get_csv_util()->parse_csv_row( $line, (string) $csv_data['delimiter'] );
@@ -270,6 +297,7 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 					'post_type' => (string) ( $config['post_type'] ?? 'post' ),
 				]
 			);
+			$counters['import_profile']['preload'] += microtime( true ) - $preload_started_at;
 		}
 
 		wp_defer_term_counting( true );
@@ -322,11 +350,11 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 	 * Run the batch loop.
 	 *
 	 * @since 0.9.8
-	 * @param wpdb                           $wpdb WordPress database handler.
-	 * @param array                          $config Import configuration.
-	 * @param array                          $csv_data Parsed CSV data.
-	 * @param array                          $allowed_post_fields Allowed post fields.
-	 * @param array                          $counters Counters (by reference).
+	 * @param wpdb                                      $wpdb WordPress database handler.
+	 * @param array                                     $config Import configuration.
+	 * @param array                                     $csv_data Parsed CSV data.
+	 * @param array                                     $allowed_post_fields Allowed post fields.
+	 * @param array                                     $counters Counters (by reference).
 	 * @param FE_CSV_Import_Export_Import_Row_Context   $row_context_util Row context util.
 	 * @param FE_CSV_Import_Export_Import_Row_Processor $row_processor_util Row processor util.
 	 * @param FE_CSV_Import_Export_Import_Persister     $persister_util Persister util.
@@ -348,6 +376,7 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 		$import_session = (string) ( $config['import_session'] ?? '' );
 		$batch_lines    = isset( $csv_data['batch_lines'] ) && is_array( $csv_data['batch_lines'] ) ? $csv_data['batch_lines'] : [];
 		$batch_count    = count( $batch_lines );
+		$batch_items    = [];
 		for ( $i = 0; $i < $batch_count; $i++ ) {
 			if ( '' !== $import_session && $this->get_cancel_manager()->is_cancelled( $import_session ) ) {
 				break;
@@ -363,25 +392,30 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 				$row_context_util,
 				$row_processor_util,
 				$persister_util,
-				$meta_tax_util
+				$meta_tax_util,
+				$batch_items
 			);
 		}
+
+		$context = $this->build_row_processing_context( $config, $csv_data, $csv_data['headers'], $allowed_post_fields );
+		$meta_tax_util->apply_prepared_meta_and_taxonomies_for_batch( $wpdb, $batch_items, $context, $counters['dry_run_log'], $counters['import_profile'] );
 	}
 
 	/**
 	 * Import loop iteration logic
 	 *
 	 * @since 0.9.8
-	 * @param wpdb                           $wpdb WordPress database handler.
-	 * @param array                          $config Import configuration.
-	 * @param array                          $csv_data Parsed CSV data.
-	 * @param array                          $allowed_post_fields Allowed post fields.
-	 * @param int                            $index Row index.
-	 * @param array                          $counters Counters (by reference).
+	 * @param wpdb                                      $wpdb WordPress database handler.
+	 * @param array                                     $config Import configuration.
+	 * @param array                                     $csv_data Parsed CSV data.
+	 * @param array                                     $allowed_post_fields Allowed post fields.
+	 * @param int                                       $index Row index.
+	 * @param array                                     $counters Counters (by reference).
 	 * @param FE_CSV_Import_Export_Import_Row_Context   $row_context_util Row context util.
 	 * @param FE_CSV_Import_Export_Import_Row_Processor $row_processor_util Row processor util.
 	 * @param FE_CSV_Import_Export_Import_Persister     $persister_util Persister util.
 	 * @param FE_CSV_Import_Export_Import_Meta_Tax      $meta_tax_util Meta/tax util.
+	 * @param array                                     $batch_items Prepared batch items.
 	 * @return void
 	 */
 	private function process_import_loop_iteration(
@@ -394,7 +428,8 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 		FE_CSV_Import_Export_Import_Row_Context $row_context_util,
 		FE_CSV_Import_Export_Import_Row_Processor $row_processor_util,
 		FE_CSV_Import_Export_Import_Persister $persister_util,
-		FE_CSV_Import_Export_Import_Meta_Tax $meta_tax_util
+		FE_CSV_Import_Export_Import_Meta_Tax $meta_tax_util,
+		array &$batch_items
 	): void {
 		$lines             = $csv_data['batch_lines'];
 		$delimiter         = $csv_data['delimiter'];
@@ -408,39 +443,41 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 			return;
 		}
 
-		// Use Ajax_Import's original row processing logic.
-		$row_context = $this->build_import_row_context_from_config( $wpdb, $row_context_util, $config, $line, $delimiter, $headers, $allowed_post_fields, $parsed_data );
+		$row_context_started_at                     = microtime( true );
+		$row_context                                = $this->build_import_row_context_from_config( $wpdb, $row_context_util, $config, $line, $delimiter, $headers, $allowed_post_fields, $parsed_data );
+		$counters['import_profile']['row_context'] += microtime( true ) - $row_context_started_at;
 		if ( null === $row_context ) {
 			return;
 		}
 
 		$context = $this->build_row_processing_context( $config, $csv_data, $headers, $allowed_post_fields );
 
-		// Use the original row processor utility.
+		$row_processor_started_at = microtime( true );
 		$row_processor_util->process_row_context_with_persister(
 			$wpdb,
 			$row_context,
 			$context,
 			$counters,
 			$persister_util,
-			function ( wpdb $wpdb, int $post_id, bool $is_update, array $context, array &$counters ) use ( $meta_tax_util ): void {
-				$this->handle_successful_row_import( $wpdb, $post_id, $is_update, $context, $counters, $meta_tax_util );
+			function ( wpdb $wpdb, int $post_id, bool $is_update, array $context, array &$counters ) use ( $meta_tax_util, &$batch_items ): void {
+				$this->handle_successful_row_import( $wpdb, $post_id, $is_update, $context, $counters, $meta_tax_util, $batch_items );
 			}
 		);
+		$counters['import_profile']['row_processor'] += microtime( true ) - $row_processor_started_at;
 	}
 
 	/**
 	 * Row context building logic
 	 *
 	 * @since 0.9.8
-	 * @param wpdb                         $wpdb WordPress database handler.
+	 * @param wpdb                                    $wpdb WordPress database handler.
 	 * @param FE_CSV_Import_Export_Import_Row_Context $row_context_util Row context util.
-	 * @param array                        $config Import configuration.
-	 * @param string                       $line CSV line.
-	 * @param string                       $delimiter CSV delimiter.
-	 * @param array                        $headers CSV headers.
-	 * @param array                        $allowed_post_fields Allowed post fields.
-	 * @param array                        $parsed_data Parsed CSV row data.
+	 * @param array                                   $config Import configuration.
+	 * @param string                                  $line CSV line.
+	 * @param string                                  $delimiter CSV delimiter.
+	 * @param array                                   $headers CSV headers.
+	 * @param array                                   $allowed_post_fields Allowed post fields.
+	 * @param array                                   $parsed_data Parsed CSV row data.
 	 * @return array|null Row context or null if invalid.
 	 */
 	protected function build_import_row_context_from_config( wpdb $wpdb, FE_CSV_Import_Export_Import_Row_Context $row_context_util, array $config, string $line, string $delimiter, array $headers, array $allowed_post_fields, array $parsed_data = [] ): ?array {
@@ -484,22 +521,22 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 	 * Successful row import handling logic.
 	 *
 	 * @since 0.9.8
-	 * @param wpdb                      $wpdb WordPress database object.
-	 * @param int                       $post_id Post ID.
-	 * @param bool                      $is_update Whether this was an update.
-	 * @param array                     $context Row processing context.
-	 * @param array                     $counters Counters (by reference).
+	 * @param wpdb                                 $wpdb WordPress database object.
+	 * @param int                                  $post_id Post ID.
+	 * @param bool                                 $is_update Whether this was an update.
+	 * @param array                                $context Row processing context.
+	 * @param array                                $counters Counters (by reference).
 	 * @param FE_CSV_Import_Export_Import_Meta_Tax $meta_tax_util Meta/tax util.
+	 * @param array                                $batch_items Prepared batch items.
 	 * @return void
 	 */
-	protected function handle_successful_row_import( wpdb $wpdb, int $post_id, bool $is_update, array $context, array &$counters, FE_CSV_Import_Export_Import_Meta_Tax $meta_tax_util ): void {
-		$headers                    = $context['headers'];
-		$data                       = $context['data'];
-		$allowed_post_fields        = $context['allowed_post_fields'];
-		$taxonomy_format            = $context['taxonomy_format'];
-		$taxonomy_format_validation = $context['taxonomy_format_validation'];
-		$dry_run                    = $context['dry_run'];
-		$should_generate_logs       = isset( $context['append_log'] ) && is_callable( $context['append_log'] );
+	protected function handle_successful_row_import( wpdb $wpdb, int $post_id, bool $is_update, array $context, array &$counters, FE_CSV_Import_Export_Import_Meta_Tax $meta_tax_util, array &$batch_items ): void {
+		$headers                = $context['headers'];
+		$data                   = $context['data'];
+		$allowed_post_fields    = $context['allowed_post_fields'];
+		$dry_run                = $context['dry_run'];
+		$should_generate_logs   = isset( $context['append_log'] ) && is_callable( $context['append_log'] );
+		$success_log_started_at = microtime( true );
 
 		if ( $should_generate_logs ) {
 			$row_number = $context['start_row'] + $counters['processed'] + 1; // Correct row number from context.
@@ -526,25 +563,26 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 
 			call_user_func( $context['append_log'], $detail );
 		}
+		$counters['import_profile']['success_log'] += microtime( true ) - $success_log_started_at;
 
+		$success_counter_started_at = microtime( true );
 		$this->get_row_processor_util()->apply_success_counters_and_guid_without_callbacks(
 			$wpdb,
 			$post_id,
 			$is_update,
 			$counters
 		);
+		$counters['import_profile']['success_counter_guid'] += microtime( true ) - $success_counter_started_at;
 
-		$result = $meta_tax_util->process_meta_and_taxonomies_for_row_with_args(
-			$wpdb,
+		$prepare_started_at = microtime( true );
+		$result             = $meta_tax_util->prepare_meta_and_taxonomies_for_row_with_args(
 			$post_id,
 			$headers,
 			$data,
-			$allowed_post_fields,
-			$taxonomy_format,
-			$taxonomy_format_validation,
-			$dry_run,
-			$counters
+			$allowed_post_fields
 		);
+		$batch_items[]      = $result;
+		$counters['import_profile']['prepare_meta_tax'] += microtime( true ) - $prepare_started_at;
 
 		$prepare_args         = [
 			'headers'   => $headers,
@@ -553,11 +591,14 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 			'post_type' => $context['post_type'] ?? 'post',
 			'dry_run'   => $dry_run,
 		];
+		$hooks_started_at     = microtime( true );
 		$prepared_meta_fields = apply_filters( 'fe_csv_import_export_prepare_import_fields', $result['meta_fields'], $post_id, $prepare_args );
 		do_action( 'fe_csv_import_export_import_phase_map_prepared', $post_id, $prepared_meta_fields, $prepare_args );
 
 		do_action( 'fe_csv_import_export_import_phase_post_persist', $post_id, $prepared_meta_fields, $prepare_args );
 		do_action( 'fe_csv_import_export_process_custom_fields', $post_id, $prepared_meta_fields );
+		$counters['import_profile']['compat_hooks'] += microtime( true ) - $hooks_started_at;
+		++$counters['import_profile']['rows_profiled'];
 	}
 
 	/**
