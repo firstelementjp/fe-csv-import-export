@@ -47,9 +47,9 @@ ID,post_title,cf_name,cf_email,cf_tags
 注：
 
 - カスタムフィールドヘッダーは `cf_` で始まる必要があります。
-- 複数値カスタムフィールドは `|` を使用します。
+- 複数の値を登録するには `|` で区切ります。
 
-### 階層タクソノミー
+### 階層化されたタクソノミー
 
 ```csv
 ID,post_title,category,post_tag
@@ -60,6 +60,7 @@ ID,post_title,category,post_tag
 注：
 
 - 階層レベルには `>` を使用します。
+- 同じ名称のタームが異なる親タームの階層にそれぞれ存在する場合に、階層の明記が必要です。
 - 複数のタクソノミー値には `|` を使用します。
 - ターム名でインポートする場合、該当するタームが存在しない場合は新しく作成されます。
 
@@ -93,7 +94,7 @@ ID,post_title,post_content,post_status,cf_price,cf_sku,cf_stock,cf_color,cf_size
 - カスタムフィールドにリスト形式でデータを保存したい場合
 - 外部ツール用に商品データをエクスポートしたい場合
 
-### チームディレクトリ
+### 社員データ
 
 ```csv
 ID,post_title,cf_name,cf_title,cf_email,cf_department,cf_skills
@@ -107,7 +108,7 @@ ID,post_title,cf_name,cf_title,cf_email,cf_department,cf_skills
 - スキルなどのデータをパイプ区切りで保存したい場合
 - レビュー用に内部ディレクトリをエクスポートしたい場合
 
-## エクスポート指向の例
+## エクスポート項目の例
 
 典型的なエクスポートには、WordPressのコア項目に加えてオプションのカスタムフィールド列とタクソノミー列が含まれます。
 
@@ -116,7 +117,7 @@ ID,post_title,post_content,post_status,category,post_tag,cf_price
 "101","サンプル投稿","これはコンテンツです","publish","テクノロジー > WordPress","技術|プラグイン","19.99"
 ```
 
-## 検証のヒント
+## 確認事項
 
 インポート前に：
 
