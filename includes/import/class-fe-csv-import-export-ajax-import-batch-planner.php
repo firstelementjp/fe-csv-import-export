@@ -45,7 +45,9 @@ class FE_CSV_Import_Export_Ajax_Import_Batch_Planner {
 		$memory_based_batch = max( 1, (int) floor( $available_memory / $memory_per_row ) );
 
 		$optimized_batch_size = min( $time_based_batch, $memory_based_batch, $total_rows );
-		$base_batch_size      = max( 10, min( 100, $optimized_batch_size ) );
+		$max_batch_size       = (int) apply_filters( 'fe_csv_import_export_import_max_batch_size', 500, $total_rows, $config );
+		$max_batch_size       = max( 10, $max_batch_size );
+		$base_batch_size      = max( 10, min( $max_batch_size, $optimized_batch_size ) );
 		$base_batch_size      = min( $total_rows, $base_batch_size );
 
 		return (int) apply_filters( 'fe_csv_import_export_import_batch_size', $base_batch_size, $total_rows, $config );
