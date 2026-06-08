@@ -31,7 +31,7 @@ FE CSV Import & Export への貢献を歓迎します！
 ### 前提条件
 
 - Node.js 18.0.0 以降
-- PHP 8.1 以降
+- PHP 7.4 以降
 - WordPress 6.6 以降
 - Composer
 - direnv（環境設定に推奨）

@@ -23,7 +23,7 @@ FE CSV Import & Export is a WordPress plugin for importing and exporting post da
 ## 📋 Requirements
 
 - **WordPress**: 6.6 or higher
-- **PHP**: 8.1 or higher
+- **PHP**: 7.4 or higher
 - **Memory**: 128MB or higher recommended
 - **Extensions**: `mbstring`, `zip`
 

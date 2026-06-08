@@ -23,7 +23,7 @@ FE CSV Import & Export は、管理画面から投稿データを CSV 形式で�
 ## 📋 動作環境
 
 - **WordPress**: 6.6 以降
-- **PHP**: 8.1 以降
+- **PHP**: 7.4 以降
 - **メモリ**: 128MB 以上推奨
 - **拡張機能**: `mbstring`, `zip`
 
