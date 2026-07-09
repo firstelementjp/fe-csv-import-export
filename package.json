@@ -1,6 +1,6 @@
 {
 	"name": "fe-csv-import-export",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "FE CSV Import & Export - Simple CSV Management Without the Complexity.",
 	"license": "GPL-2.0+",
 	"engines": {

@@ -1,8 +1,8 @@
 # Distribution files for git archive (release ZIP)
 # This file controls what is excluded from git archive.
 
-# Note: For WordPress.org submission, source CSS/JS files are included
-# (minified assets are provided by the GitHub release workflow only)
+# Note: Source CSS/JS files are excluded from release ZIP
+# (only minified assets are included)
 
 # Exclude development and build files
 composer.json export-ignore
@@ -11,6 +11,11 @@ vendor/ export-ignore
 node_modules/ export-ignore
 package.json export-ignore
 package-lock.json export-ignore
+
+# Exclude source JS/CSS files (only minified assets in release)
+assets/js/*.js export-ignore
+assets/js/**/*.js export-ignore
+assets/css/*.css export-ignore
 
 # Exclude development configuration
 phpcs.xml export-ignore

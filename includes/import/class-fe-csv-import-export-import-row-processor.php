@@ -134,12 +134,12 @@ class FE_CSV_Import_Export_Import_Row_Processor {
 	 * This is a simplified API that avoids injecting the persisting callable.
 	 *
 	 * @since 0.9.0
-	 * @param wpdb                       $wpdb WordPress database handler.
-	 * @param array                      $row_context Row context.
-	 * @param array                      $context Context values for row processing.
-	 * @param array                      $counters Counters (by reference).
+	 * @param wpdb                                  $wpdb WordPress database handler.
+	 * @param array                                 $row_context Row context.
+	 * @param array                                 $context Context values for row processing.
+	 * @param array                                 $counters Counters (by reference).
 	 * @param FE_CSV_Import_Export_Import_Persister $persister Persister utility.
-	 * @param callable                   $handle_successful_row_import Success handler.
+	 * @param callable                              $handle_successful_row_import Success handler.
 	 * @return void
 	 */
 	public function process_row_context_with_persister(
@@ -174,14 +174,14 @@ class FE_CSV_Import_Export_Import_Row_Processor {
 	 * Process one import row using a persister instance without injecting callables.
 	 *
 	 * @since 0.9.0
-	 * @param wpdb                       $wpdb WordPress database handler.
-	 * @param bool                       $is_update Whether this row updates an existing post.
-	 * @param int|null                   $post_id Post ID (by reference, updated on insert).
-	 * @param array                      $post_fields_from_csv Post fields collected from CSV.
-	 * @param array                      $context Context values for row processing.
-	 * @param array                      $counters Counters (by reference).
+	 * @param wpdb                                  $wpdb WordPress database handler.
+	 * @param bool                                  $is_update Whether this row updates an existing post.
+	 * @param int|null                              $post_id Post ID (by reference, updated on insert).
+	 * @param array                                 $post_fields_from_csv Post fields collected from CSV.
+	 * @param array                                 $context Context values for row processing.
+	 * @param array                                 $counters Counters (by reference).
 	 * @param FE_CSV_Import_Export_Import_Persister $persister Persister utility.
-	 * @param callable                   $handle_successful_row_import Success handler.
+	 * @param callable                              $handle_successful_row_import Success handler.
 	 * @return void
 	 */
 	public function process_single_import_row_with_persister_without_callbacks(
