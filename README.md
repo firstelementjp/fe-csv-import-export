@@ -1,6 +1,6 @@
 # FE CSV Import & Export
 
-![FE CSV Import & Export Banner](https://github.com/firstelementjp/fe-csv-import-export/blob/main/assets/images/img-sns-banner-80.jpg?raw=true)
+![FE CSV Import & Export Banner](https://firstelementjp.github.io/fe-csv-import-export/assets/images/img-sns-banner-80.jpg)
 
 [![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](https://github.com/firstelementjp/fe-csv-import-export/releases)
 [![License](https://img.shields.io/badge/License-GPLv2%2B-blue.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
@@ -45,7 +45,7 @@ FE CSV Import & Export provides:
 ## ⚙️ Requirements
 
 - WordPress 6.6 or higher
-- PHP 8.1 or higher
+- PHP 7.4 or higher
 - OpenSSL extension
 
 ## 🚀 Installation

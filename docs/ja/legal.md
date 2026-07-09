@@ -81,7 +81,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 ### ランタイム要件
 
-- **PHP**: 8.1 以降（外部ランタイム依存関係なし）
+- **PHP**: 7.4 以降（外部ランタイム依存関係なし）
 - **WordPress**: 6.6 以降
 - **ブラウザ**: JavaScript と CSS アニメーションサポート付きの最新ブラウザ
 

@@ -81,7 +81,7 @@ This plugin uses the following open-source libraries for development:
 
 ### Runtime Requirements
 
-- **PHP**: 8.1 or higher (no external runtime dependencies)
+- **PHP**: 7.4 or higher (no external runtime dependencies)
 - **WordPress**: 6.6 or higher
 - **Browser**: Modern browser with JavaScript and CSS animation support
 

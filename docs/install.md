@@ -21,7 +21,7 @@
 ### System Requirements
 
 - **WordPress**: 6.6 or higher (recommended: 6.6+)
-- **PHP**: 8.1 or higher (recommended: 8.1+)
+- **PHP**: 7.4 or higher (recommended: 7.4+)
 - **Memory Limit**: 128MB or higher (for large CSV processing)
 - **Extensions**: `mbstring`, `zip` (for file handling)
 
@@ -75,7 +75,7 @@
 
 **Activation fails:**
 
-- Check PHP version compatibility (8.1+ required)
+- Check PHP version compatibility (7.4+ required)
 - Verify required PHP extensions are installed
 - Check WordPress version compatibility (6.6+ required)
 

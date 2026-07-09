@@ -23,7 +23,7 @@ FE CSV Import & Export is a WordPress plugin for CSV import and export with supp
 ### Current Baseline
 
 - **WordPress**: 6.6 or higher
-- **PHP**: 8.1 or higher
+- **PHP**: 7.4 or higher
 - **JavaScript**: Vanilla JavaScript, modular structure
 - **Build**: esbuild-based asset bundling and minification
 - **Localization**: English source strings with Japanese translations
