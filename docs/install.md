@@ -10,7 +10,7 @@
 
 ## Manual Installation
 
-1. [Download latest version (v1.0.0)](https://github.com/firstelementjp/fe-csv-import-export/releases/download/v1.0.0/fe-csv-import-export-1.0.0.zip)
+1. [Download latest version (v1.0.1)](https://github.com/firstelementjp/fe-csv-import-export/releases/download/v1.0.1/fe-csv-import-export-1.0.1.zip)
 2. Extract the downloaded ZIP file
 3. Upload `fe-csv-import-export` folder to `/wp-content/plugins/`
 4. Navigate to **Plugins** in WordPress admin
