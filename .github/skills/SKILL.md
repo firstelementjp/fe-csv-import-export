@@ -167,3 +167,31 @@ npm run format         # Prettier
 - **[Architecture](architecture/)** — Hook API design, unified import/export flow, and Free/Pro extension points
 - **[Troubleshooting](troubleshooting/)** — Categorized pitfall catalog for environment, PHP, JS, and security issues
 - **[Conventions](conventions/)** — WordPress coding standards, build workflow, and local environment setup
+
+## Import Optimization
+
+### Phase 1 batching
+
+- Collect successful row meta/tax data during the existing row-by-row post insert/update loop.
+- Apply prepared meta/tax data at the end of the batch.
+- Meta fields are applied via batched `postmeta` DELETE/INSERT chunks.
+- Taxonomies are still applied via the WP API after the loop.
+- Profile counters include: preload, row_context, row_processor, success_log, success_counter_guid, prepare_meta_tax, compat_hooks, meta_apply, tax_apply, tax_resolve, tax_set_terms, and rows_profiled.
+
+### Phase 2 taxonomy unchanged skip
+
+- `apply_prepared_taxonomies_for_batch()` receives `wpdb` and fetches existing taxonomy term IDs for all batch post/taxonomy pairs in one direct SELECT on `term_relationships` + `term_taxonomy`.
+- Compare normalized term_id sets and skip `apply_taxonomy_terms_to_post()` / `wp_set_post_terms()` when unchanged.
+- `import_profile` tracks `tax_set_terms_calls` and `tax_set_terms_skipped`.
+
+### Deferred hooks idea (not implemented)
+
+A future approach: bulk-register posts quickly and defer `save_post` hooks via Action Scheduler.
+
+- Benefits: faster import, full hook compatibility, lower timeout risk, admin progress UI.
+- Concerns: error recovery during deferred execution, hook prioritization, cancelability.
+- Implementation priority:
+  1. Track changed post IDs.
+  2. Schedule deferred hook execution.
+  3. Show admin progress UI.
+  4. Add error handling and recovery.
