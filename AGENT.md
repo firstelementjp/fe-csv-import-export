@@ -176,3 +176,29 @@ Use local time, not UTC.
 - `docs/` — User-facing documentation (Docsify)
 - `README.md` — Project overview and setup instructions
 - `phpcs.xml.dist` — PHP CodeSniffer configuration
+
+## Import Optimization
+
+### Current batching approach
+
+- The WP-compatible import keeps post insert/update row-based.
+- Successful row meta/tax data is collected during the loop and applied at the end of the batch.
+- Meta fields use batched `postmeta` DELETE/INSERT chunks.
+- Phase 2 skips `wp_set_post_terms()` when the normalized term_id set is unchanged by fetching existing term IDs for the whole batch in one SELECT.
+- Batch profiles track `tax_set_terms_calls` and `tax_set_terms_skipped`.
+
+### Deferred hooks idea (not yet implemented)
+
+For future import speed improvements, consider bulk post registration with deferred `save_post` hooks executed via Action Scheduler:
+
+- Benefits: faster import, hook compatibility, lower timeout risk, visible admin progress.
+- Concerns: error recovery during deferred execution, hook prioritization, cancelability.
+- Priority order:
+  1. Track changed post IDs.
+  2. Schedule deferred hook execution.
+  3. Show admin progress UI.
+  4. Add error handling and recovery.
+
+## Profiling
+
+Phase 1 profiling counters in WP-compatible import batches include: preload, row_context, row_processor, success_log, success_counter_guid, prepare_meta_tax, compat_hooks, meta_apply, tax_apply, tax_resolve, tax_set_terms, and rows_profiled.
