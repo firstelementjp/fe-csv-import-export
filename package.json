@@ -21,10 +21,10 @@
 	},
 	"devDependencies": {
 		"@wordpress/babel-plugin-makepot": "^6.42.0",
-		"@wordpress/eslint-plugin": "^24.4.0",
-		"@wordpress/scripts": "^31.7.0",
-		"esbuild": "^0.28.1",
-		"eslint": "^8.0.0",
+		"@wordpress/eslint-plugin": "^25.7.0",
+		"@wordpress/scripts": "^33.0.0",
+		"esbuild": "^0.27.2",
+		"eslint": "^10.8.0",
 		"eslint-config-wordpress": "^2.0.0",
 		"eslint-plugin-prettier": "^5.5.5",
 		"prettier": "^3.8.1"
@@ -40,7 +40,7 @@
 		"webpack-dev-server": "^5.2.4",
 		"postcss": "^8.5.14",
 		"@babel/plugin-transform-modules-systemjs": "^7.29.4",
-		"fast-uri": "^3.1.2",
+		"fast-uri": "^3.1.5",
 		"ip-address": "^10.2.0"
 	}
 }
