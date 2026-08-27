@@ -10,7 +10,7 @@
 
 ## Manual Installation
 
-1. [Download latest version (v1.0.0)](https://github.com/firstelementjp/fe-csv-import-export/releases/download/v1.0.0/fe-csv-import-export-1.0.0.zip)
+1. [Download latest version (v1.0.1)](https://github.com/firstelementjp/fe-csv-import-export/releases/download/v1.0.1/fe-csv-import-export-1.0.1.zip)
 2. Extract the downloaded ZIP file
 3. Upload `fe-csv-import-export` folder to `/wp-content/plugins/`
 4. Navigate to **Plugins** in WordPress admin
@@ -21,7 +21,7 @@
 ### System Requirements
 
 - **WordPress**: 6.6 or higher (recommended: 6.6+)
-- **PHP**: 8.1 or higher (recommended: 8.1+)
+- **PHP**: 7.4 or higher (recommended: 7.4+)
 - **Memory Limit**: 128MB or higher (for large CSV processing)
 - **Extensions**: `mbstring`, `zip` (for file handling)
 
@@ -75,7 +75,7 @@
 
 **Activation fails:**
 
-- Check PHP version compatibility (8.1+ required)
+- Check PHP version compatibility (7.4+ required)
 - Verify required PHP extensions are installed
 - Check WordPress version compatibility (6.6+ required)
 

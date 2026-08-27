@@ -1,5 +1,14 @@
 # 📋 Changelog
 
+## [1.0.1] - 2026-07-09
+
+### 🛠️ Bug Fixes
+
+- **Fixed README banner image accessibility** - Changed banner image URL from GitHub blob to GitHub Pages to ensure visibility for non-logged-in users.
+- **Fixed memory exhaustion on PHP 7.4** - Export batch size calculation now caps batch size more conservatively for PHP 7.x and low-memory environments (≤256MB), preventing memory exhaustion during first export with custom fields.
+
+---
+
 ## [1.0.0] - 2026-06-02
 
 ### 🚀 Performance Improvements

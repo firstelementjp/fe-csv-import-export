@@ -73,8 +73,22 @@ class FE_CSV_Import_Export_Ajax_Export_Batch_Planner {
 		// Apply reasonable limits based on total count.
 		$batch_size = min( $memory_based_batch, $total_count );
 
+		$php_version_id          = PHP_VERSION_ID;
+		$is_pre_php8_environment = $php_version_id < 80000;
+		$includes_custom_fields  = ! empty( $config['include_custom_fields'] );
+		$low_memory_environment  = $memory_limit <= ( 256 * 1024 * 1024 );
+
+		// Cap batch size aggressively for PHP 7.x or low-memory hosts, especially when meta export is enabled.
+		$environment_max_batch = 5000;
+		if ( $low_memory_environment ) {
+			$environment_max_batch = $includes_custom_fields ? 1000 : 2000;
+		}
+		if ( $is_pre_php8_environment ) {
+			$environment_max_batch = min( $environment_max_batch, $includes_custom_fields ? 1000 : 2000 );
+		}
+
 		// Set minimum and maximum batch sizes.
-		$batch_size = max( 100, min( 5000, $batch_size ) );
+		$batch_size = max( 100, min( $environment_max_batch, $batch_size ) );
 
 		return (int) apply_filters( 'fe_csv_import_export_export_batch_size', $batch_size, $total_count, $post_type, $config );
 	}
