@@ -31,7 +31,7 @@ We welcome contributions to FE CSV Import & Export!
 ### Prerequisites
 
 - Node.js 18.0.0 or higher
-- PHP 8.1 or higher
+- PHP 7.4 or higher
 - WordPress 6.6 or higher
 - Composer
 - direnv (recommended for environment setup)

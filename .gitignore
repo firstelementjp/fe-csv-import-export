@@ -9,6 +9,7 @@
 *.sublime-workspace
 *.code-workspace
 .windsurf/
+.devin/
 
 # OS
 .DS_Store
