@@ -4,7 +4,7 @@ Tags: csv, import, export, custom post types, custom fields
 Requires at least: 6.6
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,6 +134,18 @@ No. The free version works on its own. A Pro version is available separately for
 4. License management and Pro version features
 
 == Changelog ==
+
+= 1.0.2 =
+
+* **Fixed missing JavaScript module files in the release ZIP** - The release archive now includes all minified module files, resolving missing admin scripts (404 errors) in the packaged plugin.
+* **Improved admin header styling** - Refined header spacing and layout for a cleaner admin appearance.
+* **Improved Japanese translations** - Updated wording for consistency across admin screens.
+* Updated development dependencies and CI workflow security settings.
+
+= 1.0.1 =
+
+* Fixed README banner image accessibility.
+* Fixed memory exhaustion on PHP 7.4 and low-memory environments during export with custom fields.
 
 = 1.0.0 =
 

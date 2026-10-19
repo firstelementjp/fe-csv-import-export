@@ -7,7 +7,8 @@
  * @module FeCsvImportExportExportUnifiedModules.UI
  */
 (function () {
-	window.FeCsvImportExportExportUnifiedModules = window.FeCsvImportExportExportUnifiedModules || {};
+	window.FeCsvImportExportExportUnifiedModules =
+		window.FeCsvImportExportExportUnifiedModules || {};
 
 	window.FeCsvImportExportExportUnifiedModules.UI = {
 		/**
@@ -22,7 +23,8 @@
 			} else {
 				button.disabled = false;
 			}
-			button.textContent = button.dataset.originalText || feCsvImportExport.highSpeedExportText;
+			button.textContent =
+				button.dataset.originalText || feCsvImportExport.highSpeedExportText;
 		},
 
 		/**
@@ -38,7 +40,8 @@
 			} else {
 				button.disabled = false;
 			}
-			button.textContent = button.dataset.originalText || feCsvImportExport.highSpeedExportText;
+			button.textContent =
+				button.dataset.originalText || feCsvImportExport.highSpeedExportText;
 			const failedLabel =
 				feCsvImportExport && feCsvImportExport.messages && feCsvImportExport.messages.failed
 					? String(feCsvImportExport.messages.failed)
@@ -47,7 +50,9 @@
 			let message = String(errorMessage || '');
 			// Translate known Pro-only runtime error message.
 			if (
-				message.indexOf('Direct SQL runtime is available in FE CSV Import & Export Pro only.') !== -1 &&
+				message.indexOf(
+					'Direct SQL runtime is available in FE CSV Import & Export Pro only.'
+				) !== -1 &&
 				feCsvImportExport &&
 				feCsvImportExport.directSqlRuntimeUnavailable
 			) {

@@ -10,7 +10,8 @@
 	/**
 	 * @namespace FeCsvImportExportExportUnifiedModules
 	 */
-	window.FeCsvImportExportExportUnifiedModules = window.FeCsvImportExportExportUnifiedModules || {};
+	window.FeCsvImportExportExportUnifiedModules =
+		window.FeCsvImportExportExportUnifiedModules || {};
 
 	window.FeCsvImportExportExportUnifiedModules.Logs = {
 		/**
@@ -81,7 +82,10 @@
 							typeof buildLogMessage === 'function'
 								? buildLogMessage(detail)
 								: String(detail.title || '');
-						if (window.FeCsvImportExportUtils && window.FeCsvImportExportUtils.addLogEntry) {
+						if (
+							window.FeCsvImportExportUtils &&
+							window.FeCsvImportExportUtils.addLogEntry
+						) {
 							window.FeCsvImportExportUtils.addLogEntry(
 								logMessage,
 								detail.status === 'success' ? 'success' : 'error',

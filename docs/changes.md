@@ -1,5 +1,26 @@
 # 📋 Changelog
 
+## [1.0.2] - 2026-10-19
+
+### 🛠️ Bug Fixes
+
+- **Fixed missing JavaScript module files in the release ZIP** - The release archive now includes all minified module files under `assets/js/` and `assets/js/export/`, resolving missing admin scripts (404 errors) in the packaged plugin.
+
+### 🎨 UI Improvements
+
+- **Improved admin header styling** - Refined plugin header spacing, full-width layout, and subtle shadows for a cleaner admin appearance.
+
+### 🌐 Localization
+
+- **Improved Japanese translations** - Updated wording for consistency across admin screens and refreshed the `l10n.php` translation format.
+
+### 🔧 Maintenance
+
+- Updated development dependencies and GitHub Actions, including ESLint 10, @wordpress/scripts 34, actions/checkout v7, and related security updates.
+- Added explicit `permissions` to the security scan workflow.
+
+---
+
 ## [1.0.1] - 2026-07-09
 
 ### 🛠️ Bug Fixes

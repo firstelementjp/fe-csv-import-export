@@ -8,7 +8,7 @@
 **FE CSV Import & Export** is a WordPress plugin for CSV import/export.
 Supports custom post types, custom taxonomies, and custom fields.
 
-- **Version**: 1.0.1
+- **Version**: 1.0.2
 - **License**: GPL-2.0+
 - **PHP**: >= 8.1 (recommended)
 - **Repository**: https://github.com/firstelementjp/fe-csv-import-export
@@ -194,10 +194,10 @@ For future import speed improvements, consider bulk post registration with defer
 - Benefits: faster import, hook compatibility, lower timeout risk, visible admin progress.
 - Concerns: error recovery during deferred execution, hook prioritization, cancelability.
 - Priority order:
-  1. Track changed post IDs.
-  2. Schedule deferred hook execution.
-  3. Show admin progress UI.
-  4. Add error handling and recovery.
+    1. Track changed post IDs.
+    2. Schedule deferred hook execution.
+    3. Show admin progress UI.
+    4. Add error handling and recovery.
 
 ## Profiling
 
