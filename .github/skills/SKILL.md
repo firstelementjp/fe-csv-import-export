@@ -161,6 +161,7 @@ npm run format         # Prettier
 | 008 | JS       | UI disappears after JS modularization | Wrong DOM selectors, over-aggressive cleanup     | Test DOM selectors after UI changes                                 |
 | 009 | CSV      | Quoted fields parse inconsistently    | Assuming backslash escapes are supported         | Follow RFC 4180 expectations and verify source CSV escaping         |
 | 010 | Release  | Repo gets dirty after local packaging | Build artifacts remain in the working tree       | Use `test-release.sh` cleanup behavior and do not re-track outputs  |
+| 011 | Release  | Admin JS 404s in installed plugin     | Source JS is export-ignored but module `.min.js` files were not copied into the ZIP | Verify every file enqueued by `admin-assets.php` exists in the ZIP; `test-release.sh` prints minified file counts |
 
 ## Detailed Documentation
 
