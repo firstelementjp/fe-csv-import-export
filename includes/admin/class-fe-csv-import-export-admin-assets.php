@@ -74,12 +74,12 @@ class FE_CSV_Import_Export_Admin_Assets {
 				: true;
 
 			// Temporarily force individual files for both debug and production modes
-			// to resolve dialog opening issue in production mode
+			// to resolve dialog opening issue in production mode.
 			$force_individual_files = true;
 
-			// Use bundled script for production, individual files for debug mode
+			// Use bundled script for production, individual files for debug mode.
 			if ( $debug_mode || $force_individual_files ) {
-				// Debug mode: load individual files for easier debugging
+				// Debug mode: load individual files for easier debugging.
 				$script_url = static function ( $relative_path ) use ( $suffix ) {
 					$min_path      = preg_replace( '/\.js$/', $suffix . '.js', $relative_path );
 					$preferred_fs  = FE_CSV_IMPORT_EXPORT_PLUGIN_DIR . ltrim( $min_path, '/' );
@@ -227,7 +227,7 @@ class FE_CSV_Import_Export_Admin_Assets {
 				wp_enqueue_script( 'fe-csv-import-export-license' );
 				wp_enqueue_script( 'fe-csv-import-export-main' );
 			} else {
-				// Production mode: use bundled script
+				// Production mode: use bundled script.
 				$bundle_path = 'assets/js/fe-csv-import-export-admin.min.js';
 				$bundle_fs   = FE_CSV_IMPORT_EXPORT_PLUGIN_DIR . ltrim( $bundle_path, '/' );
 
@@ -241,7 +241,7 @@ class FE_CSV_Import_Export_Admin_Assets {
 					);
 					wp_enqueue_script( 'fe-csv-import-export-admin' );
 				} else {
-					// Fallback: if bundle doesn't exist, load individual files
+					// Fallback: if bundle doesn't exist, load individual files.
 					$script_url = static function ( $relative_path ) {
 						$min_path      = preg_replace( '/\.js$/', '.min.js', $relative_path );
 						$preferred_fs  = FE_CSV_IMPORT_EXPORT_PLUGIN_DIR . ltrim( $min_path, '/' );
@@ -319,7 +319,7 @@ class FE_CSV_Import_Export_Admin_Assets {
 			}
 
 			// Localize script (use the main script handle based on mode)
-			// When forcing individual files, always use core handle
+			// When forcing individual files, always use core handle.
 			$main_script_handle = ( $debug_mode || $force_individual_files ) ? 'fe-csv-import-export-core' : 'fe-csv-import-export-admin';
 
 			wp_localize_script(

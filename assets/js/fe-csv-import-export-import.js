@@ -94,7 +94,9 @@ function initFileUpload() {
 
 	const highSpeedImportBtn = document.querySelector('#high-speed-import-btn');
 	if (highSpeedImportBtn) {
-		const directSqlEnabled = Boolean(feCsvImportExport && feCsvImportExport.enableDirectSqlImport);
+		const directSqlEnabled = Boolean(
+			feCsvImportExport && feCsvImportExport.enableDirectSqlImport
+		);
 		if (!directSqlEnabled) {
 			highSpeedImportBtn.disabled = true;
 			highSpeedImportBtn.style.display = '';
@@ -319,8 +321,14 @@ function pollImportLogs() {
 					const importPrefixText = String(feCsvImportExport.messages.importPrefix || '');
 					const actionText =
 						detail.action === 'create'
-							? String(feCsvImportExport.messages.createAction || '').replace(/[：:]\s*$/, '')
-							: String(feCsvImportExport.messages.updateAction || '').replace(/[：:]\s*$/, '');
+							? String(feCsvImportExport.messages.createAction || '').replace(
+									/[：:]\s*$/,
+									''
+								)
+							: String(feCsvImportExport.messages.updateAction || '').replace(
+									/[：:]\s*$/,
+									''
+								);
 					const prefixText = currentDryRun === '1' ? dryRunPrefixText : importPrefixText;
 					const truncatedTitle = truncateTitle(detail.title);
 					const rowText = `${feCsvImportExport.messages.rowLabel}${detail.row}`;
@@ -411,14 +419,16 @@ function startAjaxImport(importMethod) {
 	}
 
 	const postType = document.querySelector('#ajax_import_post_type')?.value || 'post';
-	const updateExisting = document.querySelector('input[name="fe_csv_import_export_import_update_existing"]')
-		?.checked
+	const updateExisting = document.querySelector(
+		'input[name="fe_csv_import_export_import_update_existing"]'
+	)?.checked
 		? '1'
 		: '0';
 	const taxonomyFormat =
-		document.querySelector('input[name="fe_csv_import_export_import_taxonomy_format"]:checked')?.value ||
-		'name';
-	const dryRun = document.querySelector('input[name="fe_csv_import_export_import_dry_run"]')?.checked
+		document.querySelector('input[name="fe_csv_import_export_import_taxonomy_format"]:checked')
+			?.value || 'name';
+	const dryRun = document.querySelector('input[name="fe_csv_import_export_import_dry_run"]')
+		?.checked
 		? '1'
 		: '0';
 	const enableLogs =
@@ -443,16 +453,24 @@ function startAjaxImport(importMethod) {
 	}
 
 	// Log import settings
-	FeCsvImportExportCore.feCsvImportExportLog(feCsvImportExport.messages.fileInfo + ' ' + file.name, 'debug');
+	FeCsvImportExportCore.feCsvImportExportLog(
+		feCsvImportExport.messages.fileInfo + ' ' + file.name,
+		'debug'
+	);
 	FeCsvImportExportCore.feCsvImportExportLog(
 		feCsvImportExport.messages.fileSize + ' ' + FeCsvImportExportCore.formatFileSize(file.size),
 		'debug'
 	);
-	FeCsvImportExportCore.feCsvImportExportLog(feCsvImportExport.messages.postTypeInfo + ' ' + postType, 'debug');
+	FeCsvImportExportCore.feCsvImportExportLog(
+		feCsvImportExport.messages.postTypeInfo + ' ' + postType,
+		'debug'
+	);
 	addLogEntry(
 		feCsvImportExport.messages.updateExistingInfo +
 			' ' +
-			(updateExisting === '1' ? feCsvImportExport.messages.yes : feCsvImportExport.messages.no),
+			(updateExisting === '1'
+				? feCsvImportExport.messages.yes
+				: feCsvImportExport.messages.no),
 		'debug',
 		'import'
 	);
@@ -506,7 +524,9 @@ function startAjaxImport(importMethod) {
 			abortController.abort(); // Cancel the fetch request
 
 			// Reset progress bar
-			const cancelProgressContainer = document.querySelector('.fe-csv-import-export-progress');
+			const cancelProgressContainer = document.querySelector(
+				'.fe-csv-import-export-progress'
+			);
 			if (cancelProgressContainer) {
 				const progressFill = progressContainer.querySelector('.progress-bar-fill');
 
@@ -596,7 +616,10 @@ function processImportChunk(
 		return;
 	}
 
-	FeCsvImportExportCore.feCsvImportExportLog(feCsvImportExport.messages.processingChunk + ' ' + startRow, 'debug');
+	FeCsvImportExportCore.feCsvImportExportLog(
+		feCsvImportExport.messages.processingChunk + ' ' + startRow,
+		'debug'
+	);
 
 	const formData = new FormData();
 	formData.append('action', 'fe_csv_import_export_ajax_import');
@@ -605,12 +628,16 @@ function processImportChunk(
 
 	// Optional: Pro pre-action re-auth token (sent only on first request).
 	if (startRow === 0) {
-		const reauthTokenEl = document.getElementById('fe-csv-import-export-pro-reauth-token-import');
+		const reauthTokenEl = document.getElementById(
+			'fe-csv-import-export-pro-reauth-token-import'
+		);
 		const reauthToken = reauthTokenEl ? reauthTokenEl.value : '';
 		if (reauthToken) {
 			formData.append('fe_csv_import_export_pro_reauth_token', reauthToken);
 		}
-		const execTokenEl = document.getElementById('fe-csv-import-export-pro-exec-password-token-import');
+		const execTokenEl = document.getElementById(
+			'fe-csv-import-export-pro-exec-password-token-import'
+		);
 		const execToken = execTokenEl ? execTokenEl.value : '';
 		if (execToken) {
 			formData.append('fe_csv_import_export_pro_exec_password_token', execToken);
@@ -681,7 +708,11 @@ function processImportChunk(
 				}
 			} else {
 				// Handle error
-				addLogEntry(feCsvImportExport.messages.importError + ' ' + data.error, 'error', 'import');
+				addLogEntry(
+					feCsvImportExport.messages.importError + ' ' + data.error,
+					'error',
+					'import'
+				);
 				stopImportLogPolling({ abortRequest: true });
 
 				if (importBtn) {
@@ -704,7 +735,11 @@ function processImportChunk(
 
 			// Handle other errors
 			const errorMessage = error.message || 'Unknown error occurred';
-			addLogEntry(feCsvImportExport.messages.importError + ' ' + errorMessage, 'error', 'import');
+			addLogEntry(
+				feCsvImportExport.messages.importError + ' ' + errorMessage,
+				'error',
+				'import'
+			);
 			stopImportLogPolling({ abortRequest: true });
 
 			if (importBtn) {
@@ -822,7 +857,9 @@ function completeAjaxImport(data, importBtn, cancelBtn) {
 	const isDryRun = data.dry_run || false;
 
 	// If the tabbed import log UI exists, completion/summary logs are rendered by displayImportLogs.
-	const hasTabbedImportLogs = !!document.querySelector('.fe-csv-import-export-logs-area .log-tab');
+	const hasTabbedImportLogs = !!document.querySelector(
+		'.fe-csv-import-export-logs-area .log-tab'
+	);
 
 	// Set progress bar to completed state
 	const progressContainer = document.querySelector('.fe-csv-import-export-progress');
@@ -837,7 +874,11 @@ function completeAjaxImport(data, importBtn, cancelBtn) {
 	// Add appropriate completion message
 	if (!hasTabbedImportLogs) {
 		if (isDryRun) {
-			addLogEntry('[Dry Run] ' + feCsvImportExport.messages.dryRunCompleted, 'success', 'import');
+			addLogEntry(
+				'[Dry Run] ' + feCsvImportExport.messages.dryRunCompleted,
+				'success',
+				'import'
+			);
 		} else {
 			addLogEntry(feCsvImportExport.messages.importCompleted, 'success', 'import');
 		}
@@ -877,7 +918,8 @@ function completeAjaxImport(data, importBtn, cancelBtn) {
 	// Reset buttons
 	if (importBtn) {
 		importBtn.disabled = false;
-		importBtn.textContent = importBtn.dataset.originalText || feCsvImportExport.messages.startImport;
+		importBtn.textContent =
+			importBtn.dataset.originalText || feCsvImportExport.messages.startImport;
 	}
 	if (cancelBtn) {
 		cancelBtn.style.display = 'none';
@@ -923,9 +965,15 @@ function displayImportLogs(recentLogs, summaryData = {}) {
 	const rowLabelText = feCsvImportExport.messages.rowLabel || 'Row';
 	const dryRunCompleteText = feCsvImportExport.messages.dryRunCompleted || 'Test completed!';
 	const importCompleteText = feCsvImportExport.messages.importComplete || 'Import Complete!';
-	const createdLabelText = sanitizeSummaryLabel(feCsvImportExport.messages.dryRunCreated || 'Created');
-	const updatedLabelText = sanitizeSummaryLabel(feCsvImportExport.messages.dryRunUpdated || 'Updated');
-	const errorsLabelText = sanitizeSummaryLabel(feCsvImportExport.messages.dryRunErrors || 'Errors');
+	const createdLabelText = sanitizeSummaryLabel(
+		feCsvImportExport.messages.dryRunCreated || 'Created'
+	);
+	const updatedLabelText = sanitizeSummaryLabel(
+		feCsvImportExport.messages.dryRunUpdated || 'Updated'
+	);
+	const errorsLabelText = sanitizeSummaryLabel(
+		feCsvImportExport.messages.dryRunErrors || 'Errors'
+	);
 
 	// Clear all panels first
 	if (createdPanel) {
@@ -1152,7 +1200,9 @@ function initializeLogTabs() {
 	});
 
 	// Add change listener to update checkbox to switch default tab
-	const updateCheckbox = document.querySelector('input[name="fe_csv_import_export_import_update_existing"]');
+	const updateCheckbox = document.querySelector(
+		'input[name="fe_csv_import_export_import_update_existing"]'
+	);
 	if (updateCheckbox) {
 		updateCheckbox.addEventListener('change', () => {
 			const newDefaultTab = document.querySelector(

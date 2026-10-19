@@ -14,7 +14,9 @@
 function initLicense() {
 	// License key visibility toggle (Show/Hide password).
 	const licenseInput = document.getElementById('fe_csv_import_export_pro_license_key_input');
-	const licenseToggle = document.getElementById('fe_csv_import_export_pro_license_toggle_visibility');
+	const licenseToggle = document.getElementById(
+		'fe_csv_import_export_pro_license_toggle_visibility'
+	);
 	if (licenseInput && licenseToggle) {
 		licenseToggle.addEventListener('click', () => {
 			const isPassword = licenseInput.type === 'password';
@@ -43,14 +45,18 @@ function initLicense() {
 			return;
 		}
 
-		const licenseKeyInput = document.getElementById('fe_csv_import_export_pro_license_key_input');
+		const licenseKeyInput = document.getElementById(
+			'fe_csv_import_export_pro_license_key_input'
+		);
 		const licenseKey = licenseKeyInput ? licenseKeyInput.value : '';
 		const spinner = button.closest('div')
 			? button.closest('div').querySelector('.spinner')
 			: null;
 
 		if (!licenseKey && action === 'activate') {
-			alert(FeCsvImportExportCore.__('Please enter a license key.', 'fe-csv-import-export-pro'));
+			alert(
+				FeCsvImportExportCore.__('Please enter a license key.', 'fe-csv-import-export-pro')
+			);
 			return;
 		}
 
@@ -61,11 +67,14 @@ function initLicense() {
 
 		try {
 			// Use the wpPost helper function from core
-			const response = await FeCsvImportExportCore.wpPost('fe_csv_import_export_pro_manage_license', {
-				nonce: feCsvImportExport.nonce,
-				license_key: licenseKey,
-				license_action: action,
-			});
+			const response = await FeCsvImportExportCore.wpPost(
+				'fe_csv_import_export_pro_manage_license',
+				{
+					nonce: feCsvImportExport.nonce,
+					license_key: licenseKey,
+					license_action: action,
+				}
+			);
 
 			// Parse JSON response (FeCsvImportExportCore.wpPost returns raw Response object)
 			const data = await response.json();
@@ -75,7 +84,10 @@ function initLicense() {
 				throw new Error(
 					data.data?.message ||
 						data.message ||
-						FeCsvImportExportCore.__('License operation failed.', 'fe-csv-import-export-pro')
+						FeCsvImportExportCore.__(
+							'License operation failed.',
+							'fe-csv-import-export-pro'
+						)
 				);
 			}
 

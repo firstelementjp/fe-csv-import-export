@@ -11,7 +11,8 @@
 	/**
 	 * @namespace FeCsvImportExportExportUnifiedModules
 	 */
-	window.FeCsvImportExportExportUnifiedModules = window.FeCsvImportExportExportUnifiedModules || {};
+	window.FeCsvImportExportExportUnifiedModules =
+		window.FeCsvImportExportExportUnifiedModules || {};
 
 	window.FeCsvImportExportExportUnifiedModules.Form = {
 		/**
@@ -21,7 +22,9 @@
 		 * @throws {Error} When the post type field is missing.
 		 */
 		getFormData() {
-			const postTypeElement = document.getElementById('fe_csv_import_export_export_post_type');
+			const postTypeElement = document.getElementById(
+				'fe_csv_import_export_export_post_type'
+			);
 			const postType = postTypeElement ? postTypeElement.value : 'post';
 
 			if (!postTypeElement || !postTypeElement.value) {
@@ -34,11 +37,13 @@
 				nonce: feCsvImportExport.nonce,
 				post_type: postType,
 				post_status:
-					document.querySelector('input[name="fe_csv_import_export_export_post_status"]:checked')
-						?.value || 'publish',
+					document.querySelector(
+						'input[name="fe_csv_import_export_export_post_status"]:checked'
+					)?.value || 'publish',
 				export_scope:
-					document.querySelector('input[name="fe_csv_import_export_export_scope"]:checked')?.value ||
-					'all',
+					document.querySelector(
+						'input[name="fe_csv_import_export_export_scope"]:checked'
+					)?.value || 'all',
 				include_taxonomies: document.querySelector(
 					'input[name="fe_csv_import_export_include_taxonomies"]'
 				)?.checked
@@ -59,7 +64,8 @@
 				)?.checked
 					? '1'
 					: '0',
-				export_limit: document.getElementById('fe_csv_import_export_export_limit')?.value || '0',
+				export_limit:
+					document.getElementById('fe_csv_import_export_export_limit')?.value || '0',
 				taxonomy_format:
 					document.querySelector('input[name="taxonomy_format"]:checked')?.value ||
 					'name',

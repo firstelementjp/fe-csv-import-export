@@ -30,7 +30,9 @@
 		"SwiftCSVCore": "readonly",
 		"addLogEntry": "readonly",
 		"clearLog": "readonly",
-		"handleAjaxExport": "readonly"
+		"handleAjaxExport": "readonly",
+		"feCsvImportExport": "readonly",
+		"FeCsvImportExportCore": "readonly"
 	},
 	"env": {
 		"browser": true,

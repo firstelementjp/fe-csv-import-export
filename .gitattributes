@@ -65,6 +65,8 @@ Thumbs.db export-ignore
 # Exclude IDE files
 .vscode/ export-ignore
 .idea/ export-ignore
+.devin/ export-ignore
+.windsurf/ export-ignore
 *.swp export-ignore
 *.swo export-ignore
 

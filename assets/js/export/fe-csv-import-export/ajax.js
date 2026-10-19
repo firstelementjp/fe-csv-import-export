@@ -10,7 +10,8 @@
 	/**
 	 * @namespace FeCsvImportExportExportUnifiedModules
 	 */
-	window.FeCsvImportExportExportUnifiedModules = window.FeCsvImportExportExportUnifiedModules || {};
+	window.FeCsvImportExportExportUnifiedModules =
+		window.FeCsvImportExportExportUnifiedModules || {};
 
 	window.FeCsvImportExportExportUnifiedModules.Ajax = {
 		/**
