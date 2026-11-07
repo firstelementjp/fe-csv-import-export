@@ -16,7 +16,7 @@
 		"wp-coding-standards/wpcs": "^3.4.1",
 		"phpcsstandards/phpcsextra": "^1.5.1",
 		"phpunit/phpunit": "^9.6",
-		"wp-phpunit/wp-phpunit": "^6.5",
+		"wp-phpunit/wp-phpunit": "^7.1",
 		"yoast/phpunit-polyfills": "^4.0"
 	},
 	"scripts": {
