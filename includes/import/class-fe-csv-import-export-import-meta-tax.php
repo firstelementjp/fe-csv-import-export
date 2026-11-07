@@ -753,7 +753,8 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 		array $context,
 		array &$dry_run_log
 	): void {
-		$dry_run = $context['dry_run'];
+		$dry_run     = $context['dry_run'];
+		$meta_fields = $this->filter_meta_fields_for_current_user( $meta_fields );
 
 		foreach ( $meta_fields as $key => $value ) {
 			// Skip empty values.
@@ -852,6 +853,42 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 	}
 
 	/**
+	 * Restrict meta fields for users without the unfiltered_html capability.
+	 *
+	 * Meta is written with direct DB queries, so protected meta keys are skipped
+	 * and string values containing HTML are passed through kses for such users.
+	 *
+	 * @since 1.0.3
+	 * @param array $meta_fields Meta fields keyed by meta key.
+	 * @return array Filtered meta fields.
+	 */
+	private function filter_meta_fields_for_current_user( array $meta_fields ): array {
+		if ( current_user_can( 'unfiltered_html' ) ) {
+			return $meta_fields;
+		}
+
+		/**
+		 * Filters whether protected meta keys may be imported by users without unfiltered_html.
+		 *
+		 * @since 1.0.3
+		 * @param bool $allow_protected_meta Whether to allow protected meta keys. Default false.
+		 */
+		$allow_protected_meta = (bool) apply_filters( 'fe_csv_import_export_allow_protected_meta_import', false );
+
+		$filtered = [];
+		foreach ( $meta_fields as $key => $value ) {
+			$key = (string) $key;
+			if ( ! $allow_protected_meta && is_protected_meta( $key, 'post' ) ) {
+				continue;
+			}
+
+			$filtered[ $key ] = ( is_string( $value ) && false !== strpos( $value, '<' ) ) ? wp_kses_post( $value ) : $value;
+		}
+
+		return $filtered;
+	}
+
+	/**
 	 * Apply prepared meta fields for a batch.
 	 *
 	 * @since 0.9.0
@@ -878,6 +915,7 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 
 			$post_id     = (int) ( $item['post_id'] ?? 0 );
 			$meta_fields = isset( $item['meta_fields'] ) && is_array( $item['meta_fields'] ) ? $item['meta_fields'] : [];
+			$meta_fields = $this->filter_meta_fields_for_current_user( $meta_fields );
 			if ( empty( $meta_fields ) || ( $post_id <= 0 && ! $dry_run ) ) {
 				continue;
 			}

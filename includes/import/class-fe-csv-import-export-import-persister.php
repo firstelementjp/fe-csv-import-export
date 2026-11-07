@@ -97,10 +97,40 @@ class FE_CSV_Import_Export_Import_Persister {
 	 */
 	public function build_post_data_for_import( bool $is_update, array $post_fields_from_csv, string $post_type ): array {
 		if ( $is_update ) {
-			return $this->build_post_data_for_update( $post_fields_from_csv );
+			$post_data = $this->build_post_data_for_update( $post_fields_from_csv );
+		} else {
+			$post_data = $this->build_post_data_for_insert( $post_fields_from_csv, $post_type );
 		}
 
-		return $this->build_post_data_for_insert( $post_fields_from_csv, $post_type );
+		return $this->sanitize_post_data_for_current_user( $post_data );
+	}
+
+	/**
+	 * Apply kses to HTML post fields when the current user lacks unfiltered_html.
+	 *
+	 * Posts are written with direct DB queries, so the kses filters that
+	 * wp_insert_post() / wp_update_post() would normally apply must be run here.
+	 *
+	 * @since 1.0.3
+	 * @param array<string, mixed> $post_data Post data array for wp_posts insert/update.
+	 * @return array<string, mixed> Sanitized post data.
+	 */
+	public function sanitize_post_data_for_current_user( array $post_data ): array {
+		if ( current_user_can( 'unfiltered_html' ) ) {
+			return $post_data;
+		}
+
+		foreach ( [ 'post_content', 'post_excerpt', 'post_content_filtered' ] as $field ) {
+			if ( isset( $post_data[ $field ] ) && is_scalar( $post_data[ $field ] ) ) {
+				$post_data[ $field ] = wp_kses_post( (string) $post_data[ $field ] );
+			}
+		}
+
+		if ( isset( $post_data['post_title'] ) && is_scalar( $post_data['post_title'] ) ) {
+			$post_data['post_title'] = wp_kses( (string) $post_data['post_title'], 'title_save_pre' );
+		}
+
+		return $post_data;
 	}
 
 	/**
