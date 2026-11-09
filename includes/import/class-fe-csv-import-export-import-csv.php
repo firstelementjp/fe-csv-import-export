@@ -160,7 +160,31 @@ class FE_CSV_Import_Export_Import_Csv {
 	 * @return array<int, string>
 	 */
 	public function parse_csv_row( string $line, string $delimiter ): array {
-		return str_getcsv( $line, $delimiter, '"', '' );
+		return array_map(
+			[ $this, 'restore_escaped_csv_field' ],
+			str_getcsv( $line, $delimiter, '"', '' )
+		);
+	}
+
+	/**
+	 * Restore a value escaped for spreadsheet formula safety on export.
+	 *
+	 * The exporter prefixes values that spreadsheet apps would interpret as
+	 * formulas (leading = + - @ tab CR) with a single quote, and doubles the
+	 * quote on values that already started with one. Strip the marker when
+	 * the following character belongs to that set so data round-trips.
+	 *
+	 * @since 1.0.3
+	 * @param string|null $field Parsed CSV field.
+	 * @return string Field with the escape prefix removed when present.
+	 */
+	private function restore_escaped_csv_field( ?string $field ): string {
+		$field = (string) $field;
+		if ( strlen( $field ) > 1 && "'" === $field[0] && in_array( $field[1], [ '=', '+', '-', '@', "\t", "\r", "'" ], true ) ) {
+			return substr( $field, 1 );
+		}
+
+		return $field;
 	}
 
 	/**
