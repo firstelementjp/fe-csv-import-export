@@ -217,6 +217,33 @@ For future import speed improvements, consider bulk post registration with defer
     3. Show admin progress UI.
     4. Add error handling and recovery.
 
+### Batched ACF scalar field writes idea (not yet implemented)
+
+For future Pro import speed improvements, route scalar ACF field updates through the
+same batched `postmeta` DELETE/INSERT path used for `cf_` fields instead of per-row
+`update_post_meta()` calls:
+
+- Motivation: typical deployments are high-volume imports (tens of thousands of
+  real-estate or job posts) with many ACF fields, where two `update_post_meta()`
+  calls per field per row (value + `_field_name` companion meta) dominate.
+- Approach: during the prepare phase, treat scalar-type ACF fields as regular
+  `meta_fields` entries and also queue the `_field_name` → `field_key` companion
+  meta, then apply both via the existing batch chunks.
+- Eligible field types (scalar only): text, textarea, number, url, email,
+  single select, radio, true_false, date/time picker, etc.
+- Keep the current `update_post_meta()` / `update_field()` path for array types
+  (taxonomy, relationship, post_object, user, gallery, checkbox) and composite
+  types (repeater, flexible, group). Taxonomy fields also need
+  `wp_set_object_terms()` when `save_terms` is set.
+- Requirements and trade-offs:
+    - Values must pass through `sanitize_meta_value_for_storage()` (or a shared
+      equivalent) because direct SQL bypasses `maybe_serialize()` protection.
+    - `update_post_meta` hooks are skipped — same trade-off as `cf_` fields.
+    - Direct SQL does not update the in-request postmeta cache.
+- Measure first: extend `import_timing_stats` to cover simple-field
+  `update_post_meta()` time and confirm its share of total import time before
+  implementing.
+
 ## Profiling
 
 Phase 1 profiling counters in WP-compatible import batches include: preload, row_context, row_processor, success_log, success_counter_guid, prepare_meta_tax, compat_hooks, meta_apply, tax_apply, tax_resolve, tax_set_terms, and rows_profiled.
