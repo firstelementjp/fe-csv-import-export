@@ -125,6 +125,11 @@ let currentDryRun = '0';
 
 let currentImportMethod = 'wp_compatible';
 
+// Dry Run diff accumulation across chunks
+let dryRunDiffRows = [];
+let dryRunDiffTotal = 0;
+let dryRunDiffSummary = null;
+
 // Global cumulative counters for accurate tracking
 let globalCumulativeCreated = 0;
 let globalCumulativeUpdated = 0;
@@ -392,6 +397,12 @@ function startAjaxImport(importMethod) {
 	globalCumulativeCreated = 0;
 	globalCumulativeUpdated = 0;
 	globalCumulativeErrors = 0;
+
+	// Reset Dry Run diff state
+	dryRunDiffRows = [];
+	dryRunDiffTotal = 0;
+	dryRunDiffSummary = null;
+	resetDiffPanel();
 
 	// Prepare tab state before writing initial logs.
 	initializeLogTabs();
@@ -671,6 +682,9 @@ function processImportChunk(
 			if (data.success) {
 				// Update progress
 				updateImportProgress(data, startTime);
+				if (data.dry_run_diff) {
+					mergeDryRunDiff(data.dry_run_diff);
+				}
 				if (enableLogs === '1') {
 					pollImportLogs();
 				}
@@ -704,6 +718,7 @@ function processImportChunk(
 							console.error('Failed to display import logs:', e);
 						}
 					}
+					renderDryRunDiff();
 					completeAjaxImport(data, importBtn, cancelBtn);
 				}
 			} else {
@@ -943,6 +958,191 @@ function completeAjaxImport(data, importBtn, cancelBtn) {
 	}
 	if (fileInfo) {
 		fileInfo.classList.remove('visible');
+	}
+}
+
+/**
+ * Merge dry run diff data from a chunk response into the accumulated state.
+ *
+ * @param {Object} diff Diff payload {rows, summary}.
+ */
+function mergeDryRunDiff(diff) {
+	if (!diff || typeof diff !== 'object') {
+		return;
+	}
+
+	if (diff.summary) {
+		if (!dryRunDiffSummary) {
+			dryRunDiffSummary = { changed: 0, unchanged: 0, created: 0, fields: {} };
+		}
+		dryRunDiffSummary.changed += Number(diff.summary.changed) || 0;
+		dryRunDiffSummary.unchanged += Number(diff.summary.unchanged) || 0;
+		dryRunDiffSummary.created += Number(diff.summary.created) || 0;
+		const fields = diff.summary.fields || {};
+		Object.keys(fields).forEach(name => {
+			dryRunDiffSummary.fields[name] =
+				(dryRunDiffSummary.fields[name] || 0) + (Number(fields[name]) || 0);
+		});
+	}
+
+	const rows = Array.isArray(diff.rows) ? diff.rows : [];
+	dryRunDiffTotal += rows.length;
+	const limit = Number(feCsvImportExport.dryRunDiffRowLimit) || 100;
+	if (dryRunDiffRows.length < limit) {
+		dryRunDiffRows = dryRunDiffRows.concat(rows).slice(0, limit);
+	}
+
+	updateDiffTabCount();
+}
+
+/**
+ * Update the diff tab counter with the number of changed rows.
+ */
+function updateDiffTabCount() {
+	const countEl = document.querySelector('.fe-csv-import-export-logs-area .diff-count');
+	if (countEl) {
+		countEl.textContent = dryRunDiffSummary ? dryRunDiffSummary.changed : 0;
+	}
+}
+
+/**
+ * Reset the diff panel to its placeholder state.
+ */
+function resetDiffPanel() {
+	const panel = document.querySelector('.log-panel[data-panel="diff"] .log-content');
+	if (panel) {
+		const placeholder =
+			(feCsvImportExport.messages && feCsvImportExport.messages.diffPlaceholder) ||
+			'Run a Dry Run to preview field changes.';
+		panel.innerHTML = `<div class="log-entry log-info log-import"><span class="log-time">[00:00:00]</span><span class="log-message">${escapeHtml(
+			placeholder
+		)}</span></div>`;
+	}
+	updateDiffTabCount();
+}
+
+/**
+ * Render the accumulated dry run diff into the Diff log panel.
+ */
+function renderDryRunDiff() {
+	const panel = document.querySelector('.log-panel[data-panel="diff"] .log-content');
+	if (!panel) {
+		return;
+	}
+
+	const messages = feCsvImportExport.messages || {};
+
+	const createEntry = (message, level = 'info') => {
+		const timestamp = new Date().toLocaleTimeString();
+		const parts = splitMetaAndTitle(message);
+		return `<div class="log-entry log-${level} log-import"><span class="log-time">[${timestamp}]</span><span class="log-message"><span class="log-meta">${escapeHtml(
+			parts.meta
+		)}</span><span class="log-title">${escapeHtml(parts.title)}</span></span></div>`;
+	};
+
+	if (currentDryRun !== '1') {
+		resetDiffPanel();
+		return;
+	}
+
+	const prefixText = String(messages.dryRunPrefix || 'Dry Run');
+	const rowLabelText = String(messages.rowLabel || 'Row');
+	const truncateValue = value => {
+		const text = String(value);
+		return text.length > 120 ? text.substring(0, 120) + '…' : text;
+	};
+	const actionLabel = action =>
+		String(
+			action === 'create' ? messages.createAction || 'New' : messages.updateAction || 'Update'
+		).replace(/[：:]\s*$/, '');
+
+	let html = '';
+
+	if (dryRunDiffSummary) {
+		html += createEntry(
+			`[${prefixText}:${messages.diffSummaryTitle || 'Diff summary'}]`,
+			'info'
+		);
+		html += createEntry(
+			`[${prefixText}]${messages.diffChangedRows || 'Rows with changes'}: ${dryRunDiffSummary.changed}`,
+			dryRunDiffSummary.changed > 0 ? 'warning' : 'info'
+		);
+		html += createEntry(
+			`[${prefixText}]${messages.diffUnchangedRows || 'Rows without changes'}: ${dryRunDiffSummary.unchanged}`,
+			'info'
+		);
+		html += createEntry(
+			`[${prefixText}]${messages.diffCreatedRows || 'New rows'}: ${dryRunDiffSummary.created}`,
+			'info'
+		);
+		const fieldNames = Object.keys(dryRunDiffSummary.fields || {});
+		if (fieldNames.length > 0) {
+			const fieldText = fieldNames
+				.map(name => `${name}: ${dryRunDiffSummary.fields[name]}`)
+				.join(', ');
+			html += createEntry(
+				`[${prefixText}]${messages.diffFieldChanges || 'Field changes'}: ${fieldText}`,
+				'info'
+			);
+		}
+	}
+
+	for (const row of dryRunDiffRows) {
+		const title = truncateTitle(row.title || '');
+		const metaText = `${prefixText}:${rowLabelText}${row.row}:${actionLabel(row.action)}`;
+		const fields = row.fields && typeof row.fields === 'object' ? row.fields : {};
+		const fieldNames = Object.keys(fields);
+		if (fieldNames.length === 0) {
+			html += createEntry(
+				`[${metaText}]${title} - ${messages.diffNoFieldChanges || 'No changes'}`,
+				row.action === 'create' ? 'success' : 'info'
+			);
+			continue;
+		}
+		html += createEntry(`[${metaText}]${title}`, 'update');
+		for (const fieldName of fieldNames) {
+			const fieldDiff = fields[fieldName] || {};
+			const oldText =
+				fieldDiff.old === null || fieldDiff.old === undefined
+					? messages.diffNewValue || '(new)'
+					: `"${truncateValue(fieldDiff.old)}"`;
+			const newText =
+				fieldDiff.new === null || fieldDiff.new === undefined || fieldDiff.new === ''
+					? messages.diffClearedValue || '(cleared)'
+					: `"${truncateValue(fieldDiff.new)}"`;
+			html += createEntry(`${fieldName}: ${oldText} → ${newText}`, 'info');
+		}
+	}
+
+	if (dryRunDiffTotal > dryRunDiffRows.length) {
+		html += createEntry(
+			`[${prefixText}]+${dryRunDiffTotal - dryRunDiffRows.length} ${
+				messages.diffMoreRows || 'more rows'
+			}`,
+			'info'
+		);
+	}
+
+	if (dryRunDiffTotal === 0) {
+		html += createEntry(`[${prefixText}]${messages.diffNoRows || 'No diff data.'}`, 'info');
+	}
+
+	panel.innerHTML = html;
+
+	// Notify listeners (e.g. Pro full diff CSV download).
+	document.dispatchEvent(
+		new CustomEvent('feCsvImportExportDryRunDiffReady', {
+			detail: {
+				session: importSession,
+				summary: dryRunDiffSummary,
+				rows: dryRunDiffTotal,
+			},
+		})
+	);
+
+	const diffTab = document.querySelector('.log-tab[data-tab="diff"]');
+	if (diffTab) {
+		diffTab.click();
 	}
 }
 

@@ -214,13 +214,14 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 	 */
 	protected function initialize_counters(): array {
 		return [
-			'processed'       => 0,
-			'created'         => 0,
-			'updated'         => 0,
-			'errors'          => 0,
-			'dry_run_log'     => [],
-			'dry_run_details' => [],
-			'import_profile'  => $this->initialize_import_profile(),
+			'processed'         => 0,
+			'created'           => 0,
+			'updated'           => 0,
+			'errors'            => 0,
+			'dry_run_log'       => [],
+			'dry_run_details'   => [],
+			'dry_run_diff_rows' => [],
+			'import_profile'    => $this->initialize_import_profile(),
 		];
 	}
 
@@ -398,7 +399,7 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 		}
 
 		$context = $this->build_row_processing_context( $config, $csv_data, $csv_data['headers'], $allowed_post_fields );
-		$meta_tax_util->apply_prepared_meta_and_taxonomies_for_batch( $wpdb, $batch_items, $context, $counters['dry_run_log'], $counters['import_profile'] );
+		$meta_tax_util->apply_prepared_meta_and_taxonomies_for_batch( $wpdb, $batch_items, $context, $counters['dry_run_log'], $counters['import_profile'], $counters['dry_run_diff_rows'] );
 	}
 
 	/**
@@ -537,16 +538,15 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 		$dry_run                = $context['dry_run'];
 		$should_generate_logs   = isset( $context['append_log'] ) && is_callable( $context['append_log'] );
 		$success_log_started_at = microtime( true );
+		$row_number             = $context['start_row'] + $counters['processed'] + 1; // Correct row number from context.
+
+		$post_title  = 'Untitled';
+		$title_index = array_search( 'post_title', $headers, true );
+		if ( false !== $title_index && isset( $data[ $title_index ] ) ) {
+			$post_title = $data[ $title_index ];
+		}
 
 		if ( $should_generate_logs ) {
-			$row_number = $context['start_row'] + $counters['processed'] + 1; // Correct row number from context.
-
-			$post_title  = 'Untitled';
-			$title_index = array_search( 'post_title', $headers, true );
-			if ( false !== $title_index && isset( $data[ $title_index ] ) ) {
-				$post_title = $data[ $title_index ];
-			}
-
 			$action = $is_update ? 'update' : 'create';
 
 			$status  = 'success';
@@ -574,6 +574,16 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 		);
 		$counters['import_profile']['success_counter_guid'] += microtime( true ) - $success_counter_started_at;
 
+		if ( $dry_run ) {
+			$counters['dry_run_diff_rows'][ $row_number ] = $this->build_dry_run_diff_row_entry(
+				$row_number,
+				$post_id,
+				$is_update,
+				$post_title,
+				$context
+			);
+		}
+
 		$prepare_started_at = microtime( true );
 		$result             = $meta_tax_util->prepare_meta_and_taxonomies_for_row_with_args(
 			$post_id,
@@ -581,7 +591,10 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 			$data,
 			$allowed_post_fields
 		);
-		$batch_items[]      = $result;
+		if ( $dry_run ) {
+			$result['row_number'] = $row_number;
+		}
+		$batch_items[]                                   = $result;
 		$counters['import_profile']['prepare_meta_tax'] += microtime( true ) - $prepare_started_at;
 
 		$prepare_args         = [
@@ -599,6 +612,50 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 		do_action( 'fe_csv_import_export_process_custom_fields', $post_id, $prepared_meta_fields );
 		$counters['import_profile']['compat_hooks'] += microtime( true ) - $hooks_started_at;
 		++$counters['import_profile']['rows_profiled'];
+	}
+
+	/**
+	 * Build a dry run diff row entry for a processed row.
+	 *
+	 * For update rows, post fields are diffed against the currently stored post.
+	 * For new rows, provided post fields are recorded with no previous value.
+	 * Meta and taxonomy diffs are merged later during the batch apply phase.
+	 *
+	 * @since 1.0.4
+	 * @param int    $row_number CSV row number.
+	 * @param int    $post_id Target post ID (0 for new posts during dry run).
+	 * @param bool   $is_update Whether this row updates an existing post.
+	 * @param string $post_title Post title for display.
+	 * @param array  $context Row processing context.
+	 * @return array Diff row entry.
+	 */
+	private function build_dry_run_diff_row_entry( int $row_number, int $post_id, bool $is_update, string $post_title, array $context ): array {
+		$entry = [
+			'row'     => $row_number,
+			'post_id' => $post_id,
+			'action'  => $is_update ? 'update' : 'create',
+			'title'   => $post_title,
+			'fields'  => [],
+		];
+
+		$post_fields_from_csv = isset( $context['post_fields_from_csv'] ) && is_array( $context['post_fields_from_csv'] )
+			? $context['post_fields_from_csv']
+			: [];
+
+		if ( $is_update ) {
+			$post_data       = $this->get_persister_util()->build_post_data_for_update( $post_fields_from_csv );
+			$entry['fields'] = FE_CSV_Import_Export_Import_Dry_Run_Diff::diff_post_fields( $post_id, $post_data );
+			return $entry;
+		}
+
+		foreach ( $post_fields_from_csv as $field => $value ) {
+			$entry['fields'][ (string) $field ] = [
+				'old' => null,
+				'new' => (string) $value,
+			];
+		}
+
+		return $entry;
 	}
 
 	/**

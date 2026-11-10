@@ -143,6 +143,18 @@ class FE_CSV_Import_Export_Import_WP_Compatible extends FE_CSV_Import_Export_Imp
 			}
 		}
 
+		$dry_run_diff = [];
+		if ( (bool) $config['dry_run'] ) {
+			$diff_rows = isset( $counters['dry_run_diff_rows'] ) && is_array( $counters['dry_run_diff_rows'] ) ? $counters['dry_run_diff_rows'] : [];
+			if ( ! empty( $diff_rows ) ) {
+				FE_CSV_Import_Export_Import_Dry_Run_Diff::append_rows_to_file( $import_session, $diff_rows );
+			}
+			$dry_run_diff = [
+				'rows'    => array_values( $diff_rows ),
+				'summary' => FE_CSV_Import_Export_Import_Dry_Run_Diff::build_summary( $diff_rows ),
+			];
+		}
+
 		$next_row        = $config['start_row'] + $counters['processed'];
 		$should_continue = $next_row < $total_rows;
 
@@ -215,7 +227,8 @@ class FE_CSV_Import_Export_Import_WP_Compatible extends FE_CSV_Import_Export_Imp
 			(bool) $config['dry_run'],
 			$counters['dry_run_log'],
 			$counters['dry_run_details'],
-			$recent_logs
+			$recent_logs,
+			$dry_run_diff
 		);
 	}
 }

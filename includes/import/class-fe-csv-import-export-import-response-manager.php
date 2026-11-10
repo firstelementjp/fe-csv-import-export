@@ -55,6 +55,7 @@ class FE_CSV_Import_Export_Import_Response_Manager {
 	 * @param array $dry_run_log Dry run log.
 	 * @param array $dry_run_details Detailed dry run results.
 	 * @param array $recent_logs Recent logs by type for UI display.
+	 * @param array $dry_run_diff Dry run diff rows and summary for the current batch.
 	 * @return void
 	 */
 	public function send_import_progress_response(
@@ -70,7 +71,8 @@ class FE_CSV_Import_Export_Import_Response_Manager {
 		bool $dry_run,
 		array $dry_run_log,
 		array $dry_run_details,
-		array $recent_logs = []
+		array $recent_logs = [],
+		array $dry_run_diff = []
 	): void {
 		$next_row = $start_row + $processed; // Use actual processed count.
 		$continue = $next_row < $total_rows;
@@ -93,6 +95,7 @@ class FE_CSV_Import_Export_Import_Response_Manager {
 				'dry_run'            => $dry_run,
 				'dry_run_log'        => [],
 				'dry_run_details'    => [],
+				'dry_run_diff'       => $dry_run_diff,
 				'recent_logs'        => $recent_logs,
 			]
 		);

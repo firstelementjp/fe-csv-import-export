@@ -156,7 +156,7 @@ class FE_CSV_Import_Export_File_Util {
 
 			$file_path = $temp_dir . '/' . $file;
 
-			if ( strpos( $file, 'ajax-import-' ) !== 0 ) {
+			if ( strpos( $file, 'ajax-import-' ) !== 0 && strpos( $file, 'dry-run-diff-' ) !== 0 ) {
 				continue;
 			}
 

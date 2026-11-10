@@ -474,7 +474,7 @@ a.nav-tab:last-of-type {
 
 .fe-csv-import-export-logs-area .progress-details {
 	display: grid;
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(4, 1fr);
 	gap: 0;
 	border-bottom: 1px solid #ddd;
 }
@@ -514,6 +514,10 @@ a.nav-tab:last-of-type {
 	color: #dc3232;
 }
 
+.fe-csv-import-export-logs-area .diff {
+	color: #7c3aed;
+}
+
 .fe-csv-import-export-logs-area .progress-details .log-tab.active.created {
 	border-bottom-color: #46b450;
 }
@@ -524,6 +528,10 @@ a.nav-tab:last-of-type {
 
 .fe-csv-import-export-logs-area .progress-details .log-tab.active.errors {
 	border-bottom-color: #dc3232;
+}
+
+.fe-csv-import-export-logs-area .progress-details .log-tab.active.diff {
+	border-bottom-color: #7c3aed;
 }
 
 /* Log Panels */

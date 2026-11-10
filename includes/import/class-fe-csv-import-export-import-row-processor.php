@@ -155,8 +155,9 @@ class FE_CSV_Import_Export_Import_Row_Processor {
 		$post_id              = $row_context['post_id'];
 		$is_update            = $row_context['is_update'];
 
-		$single_row_context         = $context;
-		$single_row_context['data'] = $data;
+		$single_row_context                         = $context;
+		$single_row_context['data']                 = $data;
+		$single_row_context['post_fields_from_csv'] = $post_fields_from_csv;
 
 		$this->process_single_import_row_with_persister_without_callbacks(
 			$wpdb,
