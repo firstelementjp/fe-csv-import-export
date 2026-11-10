@@ -9,7 +9,11 @@
 - **Neutralized spreadsheet formula injection in CSV exports** - Cells starting with `=`, `+`, `-`, `@`, tab, or carriage return (including `cf_` headers derived from meta keys) are prefixed with a single quote on export and restored on import, preventing formula execution when the CSV is opened in spreadsheet applications.
 - **Applied the pre-import authentication filter on the import AJAX endpoint** - `fe_csv_import_export_pre_ajax_import` now runs before any file processing so Pro access checks cover the full import flow.
 
-### 🔧 Maintenance
+### � Bug Fixes
+
+- **Fixed import errors displaying as "undefined" in the log** - Server-side rejections sent via `wp_send_json_error()` (e.g., Pro pre-check failures such as required re-authentication) now display the actual error message instead of `undefined`.
+
+### �🔧 Maintenance
 
 - Added a release announcement workflow for the development release process.
 

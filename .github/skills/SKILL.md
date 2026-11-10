@@ -163,6 +163,7 @@ npm run format         # Prettier
 | 010 | Release  | Repo gets dirty after local packaging | Build artifacts remain in the working tree       | Use `test-release.sh` cleanup behavior and do not re-track outputs  |
 | 011 | Release  | Admin JS 404s in installed plugin     | Source JS is export-ignored but module `.min.js` files were not copied into the ZIP | Verify every file enqueued by `admin-assets.php` exists in the ZIP; `test-release.sh` prints minified file counts |
 | 012 | Security | Uploaded CSV public in `uploads/YYYY/MM/` | `wp_handle_upload()` stored the original file publicly and only the temp copy was deleted | Move the upload directly into the protected temp dir with `move_uploaded_file()`; never route through `wp_handle_upload()` |
+| 013 | JS       | Import log shows error as `undefined`    | `wp_send_json_error( $string )` places the message under `data`, but the client read `data.error` | In AJAX error handlers, read `data.error \|\| (data.data && (data.data.message \|\| data.data))` to cover both response shapes |
 
 ## Detailed Documentation
 
