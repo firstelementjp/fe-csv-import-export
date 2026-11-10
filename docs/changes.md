@@ -8,6 +8,7 @@
 - **Prevented PHP object injection via imported custom field values** - `cf_` column values written directly to postmeta are now validated so crafted serialized payloads cannot instantiate PHP objects.
 - **Neutralized spreadsheet formula injection in CSV exports** - Cells starting with `=`, `+`, `-`, `@`, tab, or carriage return (including `cf_` headers derived from meta keys) are prefixed with a single quote on export and restored on import, preventing formula execution when the CSV is opened in spreadsheet applications.
 - **Applied the pre-import authentication filter on the import AJAX endpoint** - `fe_csv_import_export_pre_ajax_import` now runs before any file processing so Pro access checks cover the full import flow.
+- **Applied kses to imported posts and meta for users without `unfiltered_html`** - Imported content is now sanitized when the importing role cannot post unfiltered HTML.
 
 ### � Bug Fixes
 
