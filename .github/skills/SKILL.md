@@ -120,7 +120,7 @@ fe-csv-import-export-pro/                      # Pro add-on (separate repo)
 - **Streamed import batches** — Large CSV imports read logical lines incrementally and reuse cached offsets instead of retaining the entire CSV payload in memory.
 - **Import pipeline split by responsibility** — Request parsing, file processing, CSV parsing, row context creation, row persistence, log storage, and response formatting are separated into dedicated classes.
 - **Session-based export cancellation** — Uses `wp_options` with direct DB reads (bypasses cache) and per-session flags.
-- **Temporary file security** — Import temp files are cleaned up on completion/error, protected by `.htaccess`, and purged after 24h.
+- **Temporary file security** — Uploaded CSVs are moved straight into the protected temp dir (`move_uploaded_file()`, never `wp_handle_upload()`), cleaned up on completion/error, protected by `.htaccess`, and purged after 24h.
 - **Interface-based architecture** — Export/Import use base classes with WP-compatible implementations for extensibility.
 - **Object-type PHPDoc** — Use `object` in PHPDoc for IDE compatibility while maintaining strict type hints in signatures.
 
@@ -162,6 +162,8 @@ npm run format         # Prettier
 | 009 | CSV      | Quoted fields parse inconsistently    | Assuming backslash escapes are supported         | Follow RFC 4180 expectations and verify source CSV escaping         |
 | 010 | Release  | Repo gets dirty after local packaging | Build artifacts remain in the working tree       | Use `test-release.sh` cleanup behavior and do not re-track outputs  |
 | 011 | Release  | Admin JS 404s in installed plugin     | Source JS is export-ignored but module `.min.js` files were not copied into the ZIP | Verify every file enqueued by `admin-assets.php` exists in the ZIP; `test-release.sh` prints minified file counts |
+| 012 | Security | Uploaded CSV public in `uploads/YYYY/MM/` | `wp_handle_upload()` stored the original file publicly and only the temp copy was deleted | Move the upload directly into the protected temp dir with `move_uploaded_file()`; never route through `wp_handle_upload()` |
+| 013 | JS       | Import log shows error as `undefined`    | `wp_send_json_error( $string )` places the message under `data`, but the client read `data.error` | In AJAX error handlers, read `data.error \|\| (data.data && (data.data.message \|\| data.data))` to cover both response shapes |
 
 ## Detailed Documentation
 

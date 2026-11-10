@@ -425,29 +425,29 @@ abstract class FE_CSV_Import_Export_Export_Base {
 
 		// Basic row data.
 		$basic_row = [
-			$post['ID'],
-			'"' . str_replace( '"', '""', $post['post_title'] ?? '' ) . '"',
-			'"' . str_replace( '"', '""', $post['post_content'] ?? '' ) . '"',
-			$post['post_status'] ?? '',
-			$post['post_date'] ?? '',
-			$post['post_modified'] ?? '',
-			$post['post_name'] ?? '',
-			'"' . str_replace( '"', '""', $post['post_excerpt'] ?? '' ) . '"',
-			$post['post_author'] ?? 0,
-			$post['comment_count'] ?? 0,
-			$post['menu_order'] ?? 0,
+			$this->escape_csv_field( $post['ID'] ?? '' ),
+			$this->escape_csv_field( $post['post_title'] ?? '' ),
+			$this->escape_csv_field( $post['post_content'] ?? '' ),
+			$this->escape_csv_field( $post['post_status'] ?? '' ),
+			$this->escape_csv_field( $post['post_date'] ?? '' ),
+			$this->escape_csv_field( $post['post_modified'] ?? '' ),
+			$this->escape_csv_field( $post['post_name'] ?? '' ),
+			$this->escape_csv_field( $post['post_excerpt'] ?? '' ),
+			$this->escape_csv_field( $post['post_author'] ?? 0 ),
+			$this->escape_csv_field( $post['comment_count'] ?? 0 ),
+			$this->escape_csv_field( $post['menu_order'] ?? 0 ),
 		];
 
 		// All row data (includes additional fields).
 		$all_row = array_merge(
 			$basic_row,
 			[
-				$post['post_type'] ?? '',
-				$post['post_parent'] ?? 0,
-				$post['comment_status'] ?? '',
-				$post['ping_status'] ?? '',
-				$post['post_password'] ?? '',
-				( $post['ID'] && is_sticky( $post['ID'] ) ) ? '1' : '0',
+				$this->escape_csv_field( $post['post_type'] ?? '' ),
+				$this->escape_csv_field( $post['post_parent'] ?? 0 ),
+				$this->escape_csv_field( $post['comment_status'] ?? '' ),
+				$this->escape_csv_field( $post['ping_status'] ?? '' ),
+				$this->escape_csv_field( $post['post_password'] ?? '' ),
+				$this->escape_csv_field( ( $post['ID'] && is_sticky( $post['ID'] ) ) ? '1' : '0' ),
 			]
 		);
 
@@ -475,7 +475,16 @@ abstract class FE_CSV_Import_Export_Export_Base {
 	 * @return string Escaped field.
 	 */
 	protected function escape_csv_field( $field ) {
-		$field = str_replace( '"', '""', (string) $field );
+		$field = (string) $field;
+
+		// Neutralize spreadsheet formula injection: a leading apostrophe makes
+		// spreadsheet apps treat the cell as literal text. Apostrophe-prefixed
+		// values are prefixed too so the marker survives an import round trip.
+		if ( '' !== $field && in_array( $field[0], [ '=', '+', '-', '@', "\t", "\r", "'" ], true ) ) {
+			$field = "'" . $field;
+		}
+
+		$field = str_replace( '"', '""', $field );
 
 		return '"' . $field . '"';
 	}

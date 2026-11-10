@@ -3,7 +3,7 @@
  * Plugin Name:  FE CSV Import & Export
  * Plugin URI:   https://github.com/firstelementjp/fe-csv-import-export
  * Description:  Simple yet powerful CSV import/export plugin for WordPress. Supports custom post types, custom taxonomies, and custom fields.
- * Version:      1.0.2
+ * Version:      1.0.3
  * Author:       FirstElement K.K., Daijiro Miyazawa
  * Author URI:   https://www.firstelement.co.jp/
  * License:      GPL-2.0+
@@ -20,7 +20,7 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 // Define plugin constants.
-define( 'FE_CSV_IMPORT_EXPORT_VERSION', '1.0.2' );
+define( 'FE_CSV_IMPORT_EXPORT_VERSION', '1.0.3' );
 define( 'FE_CSV_IMPORT_EXPORT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FE_CSV_IMPORT_EXPORT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'FE_CSV_IMPORT_EXPORT_BASENAME', plugin_basename( __FILE__ ) );
@@ -118,9 +118,33 @@ function fe_csv_import_export_init() {
 
 	if ( is_admin() ) {
 		new FE_CSV_Import_Export_Admin();
+		add_action( 'admin_init', 'fe_csv_import_export_purge_legacy_uploads_once' );
 	}
 	new FE_CSV_Import_Export_Ajax_Import_Unified();
 	new FE_CSV_Import_Export_Ajax_Export_Unified();
+}
+
+/**
+ * Remove CSV files left in the public uploads directory.
+ *
+ * Versions before 1.0.3 stored the uploaded import CSV under
+ * uploads/YYYY/MM/ via wp_handle_upload() and never deleted it. Runs once
+ * per site, tracked by an option flag.
+ *
+ * @since 1.0.3
+ * @return void
+ */
+function fe_csv_import_export_purge_legacy_uploads_once() {
+	if ( get_option( 'fe_csv_import_export_purged_legacy_uploads' ) ) {
+		return;
+	}
+
+	// Set the flag first so a failure cannot repeat the scan on every request.
+	update_option( 'fe_csv_import_export_purged_legacy_uploads', 1 );
+
+	if ( class_exists( 'FE_CSV_Import_Export_File_Util' ) ) {
+		FE_CSV_Import_Export_File_Util::purge_orphaned_csv_uploads();
+	}
 }
 
 /**
@@ -141,30 +165,8 @@ function fe_csv_import_export_activate() {
 		FE_CSV_Import_Export_License_Handler::maybe_schedule_license_resync();
 	}
 
-	// Create temp directory and cleanup old files.
-	$upload_dir = wp_upload_dir();
-	$temp_dir   = $upload_dir['basedir'] . '/fe-csv-import-export-temp';
-	if ( ! file_exists( $temp_dir ) ) {
-		wp_mkdir_p( $temp_dir );
-	}
-
-	global $wp_filesystem;
-	if ( ! $wp_filesystem ) {
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		WP_Filesystem();
-	}
-
-	// Create .htaccess to restrict web access.
-	$htaccess_file = $temp_dir . '/.htaccess';
-	if ( ! file_exists( $htaccess_file ) && $wp_filesystem ) {
-		$wp_filesystem->put_contents( $htaccess_file, "Deny from all\n" );
-	}
-
-	// Create index.php to prevent directory listing.
-	$index_file = $temp_dir . '/index.php';
-	if ( ! file_exists( $index_file ) && $wp_filesystem ) {
-		$wp_filesystem->put_contents( $index_file, "<?php\n// Silence is golden.\n" );
-	}
+	// Create temp directory (with web access protection files) and cleanup old files.
+	$temp_dir = FE_CSV_Import_Export_File_Util::create_temp_directory();
 
 	// Cleanup old temp files (older than 24 hours).
 	$files = glob( $temp_dir . '/*.csv' );

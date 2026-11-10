@@ -55,7 +55,6 @@ class FE_CSV_Import_Export_Import_File_Processor {
 
 		// phpcs:disable WordPress.Security.NonceVerification.Missing
 
-		// Handle file upload securely using wp_handle_upload.
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( ! isset( $_FILES['csv_file'] ) ) {
 			// For batch requests (start_row > 0), use existing file.
@@ -77,14 +76,26 @@ class FE_CSV_Import_Export_Import_File_Processor {
 			}
 		}
 
-		// Use WordPress built-in file upload handler for security.
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$uploaded_file = wp_handle_upload( $_FILES['csv_file'], [ 'test_form' => false ] );
+		$file = $_FILES['csv_file'];
 
-		if ( isset( $uploaded_file['error'] ) ) {
-			FE_CSV_Import_Export_Ajax_Util::send_error_response( 'Upload error: ' . $uploaded_file['error'] );
+		// Validate the raw upload result.
+		if ( ! isset( $file['error'], $file['tmp_name'] ) || ! is_scalar( $file['error'] ) || UPLOAD_ERR_OK !== (int) $file['error'] || ! is_string( $file['tmp_name'] ) || '' === $file['tmp_name'] ) {
+			FE_CSV_Import_Export_Ajax_Util::send_error_response( 'Upload error: file upload failed.' );
+			return null;
+		}
+
+		// Reject anything that did not arrive via HTTP POST upload.
+		if ( ! is_uploaded_file( $file['tmp_name'] ) ) {
+			FE_CSV_Import_Export_Ajax_Util::send_error_response( 'Upload error: invalid file upload.' );
+			return null;
+		}
+
+		// Apply the same file type validation wp_handle_upload() performs.
+		$file_name    = isset( $file['name'] ) ? sanitize_file_name( $file['name'] ) : '';
+		$type_checked = wp_check_filetype_and_ext( $file['tmp_name'], $file_name );
+		if ( empty( $type_checked['ext'] ) || empty( $type_checked['type'] ) ) {
+			FE_CSV_Import_Export_Ajax_Util::send_error_response( 'Upload error: invalid file type.' );
 			return null;
 		}
 
@@ -98,8 +109,9 @@ class FE_CSV_Import_Export_Import_File_Processor {
 			FE_CSV_Import_Export_File_Util::cleanup_old_temp_files( $temp_dir, $temp_file );
 		}
 
-		// Copy uploaded file to temp location.
-		if ( ! copy( $uploaded_file['file'], $temp_file ) ) {
+		// Move the upload straight into the protected temp directory so the
+		// file is never placed under the publicly accessible uploads path.
+		if ( ! move_uploaded_file( $file['tmp_name'], $temp_file ) ) {
 			FE_CSV_Import_Export_Ajax_Util::send_error_response( 'Failed to save file' );
 			// phpcs:enable WordPress.Security.NonceVerification.Missing
 			return null;

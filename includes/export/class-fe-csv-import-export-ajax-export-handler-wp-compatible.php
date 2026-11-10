@@ -193,6 +193,12 @@ class FE_CSV_Import_Export_Ajax_Export_Handler_WP_Compatible {
 	 */
 	private function escape_csv_field( $field ): string {
 		$field = (string) $field;
+
+		// Neutralize spreadsheet formula injection (see Export_Base::escape_csv_field).
+		if ( '' !== $field && in_array( $field[0], [ '=', '+', '-', '@', "\t", "\r", "'" ], true ) ) {
+			$field = "'" . $field;
+		}
+
 		$field = str_replace( '"', '""', $field );
 		return '"' . $field . '"';
 	}

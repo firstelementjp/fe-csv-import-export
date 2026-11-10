@@ -4,7 +4,7 @@ Tags: csv, import, export, custom post types, custom fields
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,6 +134,13 @@ No. The free version works on its own. A Pro version is available separately for
 4. License management and Pro version features
 
 == Changelog ==
+
+= 1.0.3 =
+
+* **Security fix: blocked direct web access to uploaded import CSVs** - Uploads are now stored in a protected temporary directory with randomized file names, and a one-time cleanup removes orphaned files left by earlier versions.
+* **Security fix: prevented PHP object injection via imported custom field values** - cf_ column values are now validated before being written to postmeta.
+* **Security fix: neutralized spreadsheet formula injection in CSV exports** - Values starting with =, +, -, @, tab, or carriage return are prefixed with a single quote on export and restored on import.
+* **Fixed missing pre-import authentication filter on the import AJAX endpoint** - The fe_csv_import_export_pre_ajax_import filter now applies to the full import flow.
 
 = 1.0.2 =
 

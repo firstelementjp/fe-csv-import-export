@@ -707,9 +707,14 @@ function processImportChunk(
 					completeAjaxImport(data, importBtn, cancelBtn);
 				}
 			} else {
-				// Handle error
+				// Handle error. Server may return the message under `error`
+				// (FE_CSV_Import_Export_Ajax_Util) or `data` (wp_send_json_error).
+				const errorDetail =
+					data.error ||
+					(data.data && (data.data.message || data.data)) ||
+					feCsvImportExport.messages.unknownError;
 				addLogEntry(
-					feCsvImportExport.messages.importError + ' ' + data.error,
+					feCsvImportExport.messages.importError + ' ' + errorDetail,
 					'error',
 					'import'
 				);

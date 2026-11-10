@@ -8,7 +8,7 @@
 **FE CSV Import & Export** is a WordPress plugin for CSV import/export.
 Supports custom post types, custom taxonomies, and custom fields.
 
-- **Version**: 1.0.2
+- **Version**: 1.0.3
 - **License**: GPL-2.0+
 - **PHP**: >= 8.1 (recommended)
 - **Repository**: https://github.com/firstelementjp/fe-csv-import-export
@@ -177,6 +177,24 @@ Use local time, not UTC.
 - `README.md` — Project overview and setup instructions
 - `phpcs.xml.dist` — PHP CodeSniffer configuration
 
+## GitHub Actions Workflows
+
+- **release-zip.yml**: Release ZIP creation and GitHub Release (tags), plus optional announcement posts and WordPress.org SVN deploy
+
+Required GitHub Secrets for WordPress.org SVN deploy (`deploy-to-svn` job; also requires the `WORDPRESS_ORG_SVN_ENABLED` variable set to `true`):
+
+- `SVN_USERNAME`
+- `SVN_PASSWORD`
+
+Optional announcement integrations (`announce` job in release-zip.yml, all opt-in):
+
+- Runs on a self-hosted macOS runner (`runs-on: [self-hosted, macOS]`) because the company site blocks overseas IPs and GitHub-hosted runners run in Azure US regions
+- Variables: `WP_BASE_URL` (company site URL), `WP_CATEGORY_ID` (fallback post category), `WP_JA_CATEGORY_ID` / `WP_EN_CATEGORY_ID` (per-language categories), `ENABLE_X_POST` (`true` to post to X; otherwise draft texts go to the job summary)
+- Secrets: `WP_USERNAME` + `WP_APP_PASSWORD` (WordPress Application Password; creates JA/EN draft posts, linked via Polylang Pro REST `translations` field), `X_API_KEY`, `X_API_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET` (X API OAuth 1.0a user context)
+- Scripts: `.github/scripts/announce-release.sh`, `.github/scripts/post-x.mjs`
+- Post title highlight: `.github/announce/<tag>.ja.txt` and `.github/announce/<tag>.en.txt` (single-line text created during release prep; appended after a pipe, omitted when absent)
+- The self-hosted runner needs `bash`, `jq`, `curl`, `node`/`npx` (for `marked` and `twitter-api-v2`) installed
+
 ## Import Optimization
 
 ### Current batching approach
@@ -198,6 +216,33 @@ For future import speed improvements, consider bulk post registration with defer
     2. Schedule deferred hook execution.
     3. Show admin progress UI.
     4. Add error handling and recovery.
+
+### Batched ACF scalar field writes idea (not yet implemented)
+
+For future Pro import speed improvements, route scalar ACF field updates through the
+same batched `postmeta` DELETE/INSERT path used for `cf_` fields instead of per-row
+`update_post_meta()` calls:
+
+- Motivation: typical deployments are high-volume imports (tens of thousands of
+  real-estate or job posts) with many ACF fields, where two `update_post_meta()`
+  calls per field per row (value + `_field_name` companion meta) dominate.
+- Approach: during the prepare phase, treat scalar-type ACF fields as regular
+  `meta_fields` entries and also queue the `_field_name` → `field_key` companion
+  meta, then apply both via the existing batch chunks.
+- Eligible field types (scalar only): text, textarea, number, url, email,
+  single select, radio, true_false, date/time picker, etc.
+- Keep the current `update_post_meta()` / `update_field()` path for array types
+  (taxonomy, relationship, post_object, user, gallery, checkbox) and composite
+  types (repeater, flexible, group). Taxonomy fields also need
+  `wp_set_object_terms()` when `save_terms` is set.
+- Requirements and trade-offs:
+    - Values must pass through `sanitize_meta_value_for_storage()` (or a shared
+      equivalent) because direct SQL bypasses `maybe_serialize()` protection.
+    - `update_post_meta` hooks are skipped — same trade-off as `cf_` fields.
+    - Direct SQL does not update the in-request postmeta cache.
+- Measure first: extend `import_timing_stats` to cover simple-field
+  `update_post_meta()` time and confirm its share of total import time before
+  implementing.
 
 ## Profiling
 

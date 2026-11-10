@@ -53,6 +53,7 @@ function fe_csv_import_export_uninstall() {
 		'fe_csv_import_export_settings',
 		'fe_csv_import_export_pro_license', // Also remove license data
 		'fe_csv_import_export_encryption_key', // Remove encryption key
+		'fe_csv_import_export_purged_legacy_uploads', // Legacy upload purge flag
 	];
 
 	foreach ( $options as $option ) {

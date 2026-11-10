@@ -814,6 +814,10 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 			if ( count( $values ) > 1 ) {
 				foreach ( array_map( 'trim', $values ) as $single_value ) {
 					if ( '' !== $single_value ) {
+						$single_value = $this->sanitize_meta_value_for_storage( $single_value );
+						if ( null === $single_value ) {
+							continue;
+						}
 						// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,
 						// WordPress.DB.DirectDatabaseQuery.NoCaching,
 						// WordPress.DB.SlowDBQuery.slow_db_query_meta_key,
@@ -833,7 +837,10 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 				continue;
 			}
 
-			$value = trim( (string) ( $values[0] ?? '' ) );
+			$value = $this->sanitize_meta_value_for_storage( trim( (string) ( $values[0] ?? '' ) ) );
+			if ( null === $value ) {
+				continue;
+			}
 
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,
 			// WordPress.DB.DirectDatabaseQuery.NoCaching,
@@ -845,7 +852,7 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 				[
 					'post_id'    => $post_id,
 					'meta_key'   => $key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-					'meta_value' => is_string( $value ) ? $value : maybe_serialize( $value ), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+					'meta_value' => $value, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 				],
 				[ '%d', '%s', '%s' ]
 			);
@@ -944,6 +951,10 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 					if ( '' === $single_value ) {
 						continue;
 					}
+					$single_value = $this->sanitize_meta_value_for_storage( $single_value );
+					if ( null === $single_value ) {
+						continue;
+					}
 					$insert_rows[] = [
 						'post_id'    => $post_id,
 						'meta_key'   => (string) $key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
@@ -1031,6 +1042,65 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 		if ( count( $dry_run_log ) > $dry_run_log_limit ) {
 			$dry_run_log = array_slice( $dry_run_log, -1 * $dry_run_log_limit );
 		}
+	}
+
+	/**
+	 * Sanitize a meta value before it is written to postmeta.
+	 *
+	 * Meta values are inserted into postmeta directly via $wpdb, bypassing the
+	 * double-serialization that add_post_meta() applies to serialized-looking
+	 * strings. A crafted serialized string stored raw would be turned into an
+	 * object by maybe_unserialize() on the next get_post_meta() call (PHP object
+	 * injection). Serialized input is only kept when it can be restored without
+	 * instantiating any class; anything else is rejected.
+	 *
+	 * @since 1.0.3
+	 * @param string $value Meta value candidate.
+	 * @return string|null Safe value to store, or null when the value must be skipped.
+	 */
+	private function sanitize_meta_value_for_storage( string $value ): ?string {
+		if ( ! is_serialized( $value ) ) {
+			return $value;
+		}
+
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize,WordPress.PHP.NoSilencedErrors.Discouraged -- Object creation is disabled to detect and reject PHP object injection payloads; malformed input may emit a warning.
+		$unserialized = @unserialize( $value, [ 'allowed_classes' => false ] );
+		if ( false === $unserialized && 'b:0;' !== $value ) {
+			return null;
+		}
+
+		if ( $this->meta_value_contains_incomplete_class( $unserialized ) ) {
+			return null;
+		}
+
+		return $value;
+	}
+
+	/**
+	 * Check whether a value contains __PHP_Incomplete_Class instances.
+	 *
+	 * With allowed_classes disabled, unserialize() replaces every object with
+	 * __PHP_Incomplete_Class, so their presence means the payload contained
+	 * object data that must not be stored raw.
+	 *
+	 * @since 1.0.3
+	 * @param mixed $value Value to inspect.
+	 * @return bool True when the value contains an incomplete class instance.
+	 */
+	private function meta_value_contains_incomplete_class( $value ): bool {
+		if ( $value instanceof \__PHP_Incomplete_Class ) {
+			return true;
+		}
+
+		if ( is_array( $value ) ) {
+			foreach ( $value as $item ) {
+				if ( $this->meta_value_contains_incomplete_class( $item ) ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	/**
