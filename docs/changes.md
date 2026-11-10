@@ -1,5 +1,20 @@
 # 📋 Changelog
 
+## [1.0.3] - 2026-11-09
+
+### 🔒 Security Fixes
+
+- **Blocked direct web access to uploaded import CSVs** - Uploaded CSV files are now moved directly into a protected temporary directory instead of the public `uploads/YYYY/MM/` path, with `.htaccess`/`index.php` protection files written on every use and randomized temp file names. A one-time cleanup also removes orphaned CSV files left behind by earlier versions.
+- **Prevented PHP object injection via imported custom field values** - `cf_` column values written directly to postmeta are now validated so crafted serialized payloads cannot instantiate PHP objects.
+- **Neutralized spreadsheet formula injection in CSV exports** - Cells starting with `=`, `+`, `-`, `@`, tab, or carriage return (including `cf_` headers derived from meta keys) are prefixed with a single quote on export and restored on import, preventing formula execution when the CSV is opened in spreadsheet applications.
+- **Applied the pre-import authentication filter on the import AJAX endpoint** - `fe_csv_import_export_pre_ajax_import` now runs before any file processing so Pro access checks cover the full import flow.
+
+### 🔧 Maintenance
+
+- Added a release announcement workflow for the development release process.
+
+---
+
 ## [1.0.2] - 2026-10-19
 
 ### 🛠️ Bug Fixes
