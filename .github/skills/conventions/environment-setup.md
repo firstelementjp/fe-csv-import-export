@@ -11,7 +11,7 @@ Use a local WordPress site with the plugin checked out under `wp-content/plugins
 Recommended baseline:
 
 ```bash
-php >= 8.1
+php >= 7.4
 wordpress >= 6.6
 node >= 22
 composer installed

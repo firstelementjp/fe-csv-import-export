@@ -176,7 +176,7 @@ window.FECsvImportExportLicense = {
 - **Language**: Base language is English with Japanese translation via po/mo files
 - **Code comments**: Always in English (user rule)
 - **No emojis** in code unless explicitly requested
-- **PHP version**: Target PHP 8.1+ with modern features where appropriate
+- **PHP version**: Target PHP 7.4+ compatibility — avoid PHP 8.x-only syntax (enums, readonly, named args, match, etc.)
 - **WordPress version**: Target WordPress 6.6+
 
 ## Build Process
