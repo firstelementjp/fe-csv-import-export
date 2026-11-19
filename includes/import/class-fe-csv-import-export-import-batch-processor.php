@@ -91,6 +91,17 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 	private $cancel_manager;
 
 	/**
+	 * Post IDs persisted during the current batch.
+	 *
+	 * Collected from successful non-dry-run rows and passed to the
+	 * 'fe_csv_import_export_import_batch_completed' action.
+	 *
+	 * @since 1.0.4
+	 * @var array<int, int>
+	 */
+	private $batch_persisted_post_ids = [];
+
+	/**
 	 * Constructor.
 	 *
 	 * Allows injecting dependencies for alternative import methods (e.g., direct SQL)
@@ -373,10 +384,11 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 		FE_CSV_Import_Export_Import_Meta_Tax $meta_tax_util
 	): void {
 		// Calculate end row once to avoid function calls in loop test.
-		$import_session = (string) ( $config['import_session'] ?? '' );
-		$batch_lines    = isset( $csv_data['batch_lines'] ) && is_array( $csv_data['batch_lines'] ) ? $csv_data['batch_lines'] : [];
-		$batch_count    = count( $batch_lines );
-		$batch_items    = [];
+		$import_session                 = (string) ( $config['import_session'] ?? '' );
+		$batch_lines                    = isset( $csv_data['batch_lines'] ) && is_array( $csv_data['batch_lines'] ) ? $csv_data['batch_lines'] : [];
+		$batch_count                    = count( $batch_lines );
+		$batch_items                    = [];
+		$this->batch_persisted_post_ids = [];
 		for ( $i = 0; $i < $batch_count; $i++ ) {
 			if ( '' !== $import_session && $this->get_cancel_manager()->is_cancelled( $import_session ) ) {
 				break;
@@ -399,6 +411,31 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 
 		$context = $this->build_row_processing_context( $config, $csv_data, $csv_data['headers'], $allowed_post_fields );
 		$meta_tax_util->apply_prepared_meta_and_taxonomies_for_batch( $wpdb, $batch_items, $context, $counters['dry_run_log'], $counters['import_profile'] );
+
+		/**
+		 * Fires after a batch has been fully persisted, including meta and
+		 * taxonomies. Receives the post IDs of rows that were actually
+		 * written to the database (empty for dry runs and failed rows).
+		 *
+		 * Import writes posts via direct queries, so 'save_post' never fires
+		 * for imported rows. Integrations that react to post changes (e.g.
+		 * search indexers) should hook here instead.
+		 *
+		 * @since 1.0.4
+		 * @param array<int, int> $post_ids Post IDs persisted in this batch.
+		 * @param array           $context  Batch context (post_type, import_session, start_row, dry_run, batch_size).
+		 */
+		do_action(
+			'fe_csv_import_export_import_batch_completed',
+			$this->batch_persisted_post_ids,
+			[
+				'post_type'      => $context['post_type'],
+				'import_session' => $context['import_session'],
+				'start_row'      => $context['start_row'],
+				'dry_run'        => $context['dry_run'],
+				'batch_size'     => $batch_count,
+			]
+		);
 	}
 
 	/**
@@ -599,6 +636,10 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 		do_action( 'fe_csv_import_export_process_custom_fields', $post_id, $prepared_meta_fields );
 		$counters['import_profile']['compat_hooks'] += microtime( true ) - $hooks_started_at;
 		++$counters['import_profile']['rows_profiled'];
+
+		if ( ! $dry_run && $post_id > 0 ) {
+			$this->batch_persisted_post_ids[] = $post_id;
+		}
 	}
 
 	/**
