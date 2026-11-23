@@ -354,6 +354,7 @@ class FE_CSV_Import_Export_Admin_Page {
 							<div class="log-tab created active" data-tab="created"><?php esc_html_e( 'Created:', 'fe-csv-import-export' ); ?> <span class="created-count">0</span></div>
 							<div class="log-tab modified" data-tab="updated"><?php esc_html_e( 'Updated:', 'fe-csv-import-export' ); ?> <span class="updated-count">0</span></div>
 							<div class="log-tab errors" data-tab="errors"><?php esc_html_e( 'Errors:', 'fe-csv-import-export' ); ?> <span class="error-count">0</span></div>
+							<div class="log-tab diff" data-tab="diff"><?php esc_html_e( 'Diff:', 'fe-csv-import-export' ); ?> <span class="diff-count">0</span></div>
 						</div>
 						<div class="log-panels">
 							<div class="log-panel active" data-panel="created">
@@ -371,7 +372,13 @@ class FE_CSV_Import_Export_Admin_Page {
 									<div class="log-entry log-info log-import"><span class="log-time">[00:00:00]</span><span class="log-message"><?php esc_html_e( 'Ready to start import...', 'fe-csv-import-export' ); ?></span></div>
 								</div>
 							</div>
+							<div class="log-panel" data-panel="diff">
+								<div class="log-content">
+									<div class="log-entry log-info log-import"><span class="log-time">[00:00:00]</span><span class="log-message"><?php esc_html_e( 'Run a Dry Run to preview field changes.', 'fe-csv-import-export' ); ?></span></div>
+								</div>
+							</div>
 						</div>
+						<?php do_action( 'fe_csv_import_export_after_import_log_panels' ); ?>
 					</div>
 
 					<!-- Progress Bar -->

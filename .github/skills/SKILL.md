@@ -1,3 +1,8 @@
+---
+name: skills
+description: Development guide and troubleshooting knowledge base for the FE CSV Import & Export plugin — architecture decisions, coding conventions, recurring pitfalls with root causes, and build/test commands. Use when working on this plugin's PHP/JS code, debugging import/export issues, or preparing releases.
+---
+
 # SKILL.md — FE CSV Import & Export Development Guide
 
 > Top-level overview for AI assistants and developers.
@@ -11,7 +16,7 @@
 | -------------- | ------------------------------------ |
 | **Type**       | WordPress Plugin (Free + Pro add-on) |
 | **WordPress**  | 6.6+                                 |
-| **PHP**        | 8.1+                                 |
+| **PHP**        | 7.4+                                 |
 | **JavaScript** | Vanilla JS, modular (no framework)   |
 | **Build**      | esbuild for JS/CSS minification      |
 | **i18n**       | English (default), Japanese          |

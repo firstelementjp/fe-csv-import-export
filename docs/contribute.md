@@ -145,7 +145,7 @@ fe-csv-import-export/
 
 ## Getting Help
 
-- Check [SKILL.md](../.github/skills/SKILL.md) for troubleshooting
+- Check [SKILL.md](https://github.com/firstelementjp/fe-csv-import-export/blob/main/.github/skills/SKILL.md) for troubleshooting
 - Review existing issues for similar problems
 - Open a GitHub Issue when you need to report a bug or request a feature
 - Refer to WordPress coding standards documentation

@@ -233,6 +233,7 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 	 * @param array      $context Context values for row processing.
 	 * @param array      $dry_run_log Dry run log.
 	 * @param array|null $profile Import profile counters.
+	 * @param array|null $diff_rows Dry run diff rows keyed by row number.
 	 * @return void
 	 */
 	public function apply_prepared_meta_and_taxonomies_for_batch(
@@ -240,18 +241,19 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 		array $items,
 		array $context,
 		array &$dry_run_log,
-		?array &$profile = null
+		?array &$profile = null,
+		?array &$diff_rows = null
 	): void {
 		if ( null === $profile ) {
 			$profile = [];
 		}
 
 		$meta_started_at = microtime( true );
-		$this->apply_prepared_meta_fields_for_batch( $wpdb, $items, $context, $dry_run_log );
+		$this->apply_prepared_meta_fields_for_batch( $wpdb, $items, $context, $dry_run_log, $diff_rows );
 		$profile['meta_apply'] = (float) ( $profile['meta_apply'] ?? 0.0 ) + microtime( true ) - $meta_started_at;
 
 		$tax_started_at = microtime( true );
-		$this->apply_prepared_taxonomies_for_batch( $wpdb, $items, $context, $dry_run_log, $profile );
+		$this->apply_prepared_taxonomies_for_batch( $wpdb, $items, $context, $dry_run_log, $profile, $diff_rows );
 		$profile['tax_apply'] = (float) ( $profile['tax_apply'] ?? 0.0 ) + microtime( true ) - $tax_started_at;
 	}
 
@@ -482,6 +484,7 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 	 * @param array      $context Context values for row processing.
 	 * @param array      $dry_run_log Dry run log.
 	 * @param array|null $profile Import profile counters.
+	 * @param array|null $diff_rows Dry run diff rows keyed by row number.
 	 * @return void
 	 */
 	private function apply_prepared_taxonomies_for_batch(
@@ -489,17 +492,19 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 		array $items,
 		array $context,
 		array &$dry_run_log,
-		?array &$profile = null
+		?array &$profile = null,
+		?array &$diff_rows = null
 	): void {
 		if ( null === $profile ) {
 			$profile = [];
 		}
 
 		$dry_run                    = (bool) ( $context['dry_run'] ?? false );
+		$want_diff                  = $dry_run && null !== $diff_rows;
 		$taxonomy_format            = (string) ( $context['taxonomy_format'] ?? 'name' );
 		$taxonomy_format_validation = isset( $context['taxonomy_format_validation'] ) && is_array( $context['taxonomy_format_validation'] ) ? $context['taxonomy_format_validation'] : [];
 		$term_id_cache              = [];
-		$existing_term_map          = $dry_run ? [] : $this->get_existing_term_ids_for_batch( $wpdb, $items );
+		$existing_term_map          = ( ! $dry_run || $want_diff ) ? $this->get_existing_term_ids_for_batch( $wpdb, $items ) : [];
 
 		foreach ( $items as $item ) {
 			if ( ! is_array( $item ) ) {
@@ -530,6 +535,10 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 				if ( ! $dry_run && $this->are_taxonomy_terms_unchanged( $existing_term_map, $post_id, $taxonomy, $term_ids ) ) {
 					$profile['tax_set_terms_skipped'] = (int) ( $profile['tax_set_terms_skipped'] ?? 0 ) + 1;
 					continue;
+				}
+
+				if ( $want_diff ) {
+					$this->append_taxonomy_diff_entry( $diff_rows, $item, $taxonomy, $term_ids, $existing_term_map );
 				}
 
 				$set_terms_started_at = microtime( true );
@@ -899,21 +908,27 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 	 * Apply prepared meta fields for a batch.
 	 *
 	 * @since 0.9.0
-	 * @param wpdb  $wpdb WordPress DB instance.
-	 * @param array $items Prepared batch items.
-	 * @param array $context Context values for row processing.
-	 * @param array $dry_run_log Dry run log.
+	 * @param wpdb       $wpdb WordPress DB instance.
+	 * @param array      $items Prepared batch items.
+	 * @param array      $context Context values for row processing.
+	 * @param array      $dry_run_log Dry run log.
+	 * @param array|null $diff_rows Dry run diff rows keyed by row number.
 	 * @return void
 	 */
 	private function apply_prepared_meta_fields_for_batch(
 		wpdb $wpdb,
 		array $items,
 		array $context,
-		array &$dry_run_log
+		array &$dry_run_log,
+		?array &$diff_rows = null
 	): void {
-		$dry_run     = (bool) ( $context['dry_run'] ?? false );
-		$delete_keys = [];
-		$insert_rows = [];
+		$dry_run       = (bool) ( $context['dry_run'] ?? false );
+		$want_diff     = $dry_run && null !== $diff_rows;
+		$existing_meta = $want_diff
+			? FE_CSV_Import_Export_Import_Dry_Run_Diff::get_existing_meta_values_for_batch( $wpdb, $items )
+			: [];
+		$delete_keys   = [];
+		$insert_rows   = [];
 
 		foreach ( $items as $item ) {
 			if ( ! is_array( $item ) ) {
@@ -937,6 +952,9 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 				}
 
 				if ( $dry_run ) {
+					if ( $want_diff ) {
+						$this->append_meta_diff_entry( $diff_rows, $item, (string) $key, (string) $value, $existing_meta );
+					}
 					$this->append_meta_dry_run_log( (string) $key, (string) $value, $dry_run_log );
 					continue;
 				}
@@ -1000,6 +1018,95 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
 			$wpdb->query( $wpdb->prepare( $sql, $params ) );
 		}
+	}
+
+	/**
+	 * Append a taxonomy diff entry to the dry run diff rows.
+	 *
+	 * Compares the resolved term ID set against the currently assigned terms.
+	 * Unchanged term sets produce no diff entry, matching the write path where
+	 * wp_set_post_terms() would leave the assignments identical.
+	 *
+	 * @since 1.0.4
+	 * @param array  $diff_rows Dry run diff rows keyed by row number.
+	 * @param array  $item Prepared batch item.
+	 * @param string $taxonomy Taxonomy name.
+	 * @param array  $term_ids Resolved term IDs that would be assigned.
+	 * @param array  $existing_term_map Existing term IDs keyed by post ID and taxonomy.
+	 * @return void
+	 */
+	private function append_taxonomy_diff_entry( array &$diff_rows, array $item, string $taxonomy, array $term_ids, array $existing_term_map ): void {
+		$row_number = (int) ( $item['row_number'] ?? 0 );
+		if ( $row_number <= 0 || ! isset( $diff_rows[ $row_number ] ) ) {
+			return;
+		}
+
+		$post_id      = (int) ( $item['post_id'] ?? 0 );
+		$existing_ids = isset( $existing_term_map[ $post_id ][ $taxonomy ] ) && is_array( $existing_term_map[ $post_id ][ $taxonomy ] )
+			? $existing_term_map[ $post_id ][ $taxonomy ]
+			: [];
+		$new_ids      = $this->normalize_term_ids_for_comparison( $term_ids );
+
+		if ( $existing_ids === $new_ids ) {
+			return;
+		}
+
+		$old_names = FE_CSV_Import_Export_Import_Dry_Run_Diff::resolve_term_names( $taxonomy, $existing_ids );
+		$new_names = FE_CSV_Import_Export_Import_Dry_Run_Diff::resolve_term_names( $taxonomy, $new_ids );
+
+		$diff_rows[ $row_number ]['fields'][ 'tax_' . $taxonomy ] = [
+			'old' => empty( $existing_ids ) ? null : implode( ' | ', $old_names ),
+			'new' => implode( ' | ', $new_names ),
+		];
+	}
+
+	/**
+	 * Append a meta field diff entry to the dry run diff rows.
+	 *
+	 * Compares the values that would be written (after pipe splitting, trimming
+	 * and storage sanitization, matching the write path) against the currently
+	 * stored meta values using strict comparison.
+	 *
+	 * @since 1.0.4
+	 * @param array  $diff_rows Dry run diff rows keyed by row number.
+	 * @param array  $item Prepared batch item.
+	 * @param string $key Meta key.
+	 * @param string $value Raw meta value from CSV.
+	 * @param array  $existing_meta Existing meta values keyed by post ID and meta key.
+	 * @return void
+	 */
+	private function append_meta_diff_entry( array &$diff_rows, array $item, string $key, string $value, array $existing_meta ): void {
+		$row_number = (int) ( $item['row_number'] ?? 0 );
+		if ( $row_number <= 0 || ! isset( $diff_rows[ $row_number ] ) ) {
+			return;
+		}
+
+		$post_id    = (int) ( $item['post_id'] ?? 0 );
+		$new_values = [];
+		foreach ( $this->get_csv_util()->split_pipe_separated_values( $value ) as $single_value ) {
+			$single_value = trim( (string) $single_value );
+			if ( '' === $single_value ) {
+				continue;
+			}
+			$single_value = $this->sanitize_meta_value_for_storage( $single_value );
+			if ( null === $single_value ) {
+				continue;
+			}
+			$new_values[] = $single_value;
+		}
+
+		$old_values = isset( $existing_meta[ $post_id ][ $key ] ) && is_array( $existing_meta[ $post_id ][ $key ] )
+			? $existing_meta[ $post_id ][ $key ]
+			: [];
+
+		if ( ! FE_CSV_Import_Export_Import_Dry_Run_Diff::meta_values_differ( $old_values, $new_values ) ) {
+			return;
+		}
+
+		$diff_rows[ $row_number ]['fields'][ 'cf_' . $key ] = [
+			'old' => $post_id > 0 ? FE_CSV_Import_Export_Import_Dry_Run_Diff::format_diff_value( $old_values ) : null,
+			'new' => FE_CSV_Import_Export_Import_Dry_Run_Diff::format_diff_value( $new_values ),
+		];
 	}
 
 	/**

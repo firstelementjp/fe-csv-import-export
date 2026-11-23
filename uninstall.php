@@ -19,6 +19,42 @@ if ( ! defined( 'FE_CSV_IMPORT_EXPORT_PLUGIN_DIR' ) ) {
 }
 
 /**
+ * Remove the temporary CSV/diff directory and its contents.
+ *
+ * Temp files are runtime artifacts rather than user data, so they are
+ * removed regardless of the "remove all data" preference.
+ *
+ * @since 1.0.4
+ * @return void
+ */
+function fe_csv_import_export_remove_temp_directory() {
+	$upload_dir = wp_upload_dir();
+	if ( ! empty( $upload_dir['error'] ) || empty( $upload_dir['basedir'] ) ) {
+		return;
+	}
+
+	$temp_dir = $upload_dir['basedir'] . '/fe-csv-import-export-temp';
+	if ( ! is_dir( $temp_dir ) ) {
+		return;
+	}
+
+	// Delete regular files; glob('/*') skips dotfiles such as .htaccess.
+	foreach ( [ '/*', '/.*' ] as $pattern ) {
+		foreach ( (array) glob( $temp_dir . $pattern ) as $file_path ) {
+			if ( is_string( $file_path ) && is_file( $file_path ) ) {
+				wp_delete_file( $file_path );
+			}
+		}
+	}
+
+	// Remove the directory only once nothing but the . and .. entries remain.
+	if ( 2 === count( (array) scandir( $temp_dir ) ) ) {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
+		rmdir( $temp_dir );
+	}
+}
+
+/**
  * Clean up plugin data
  *
  * @since  0.9.4
@@ -26,6 +62,10 @@ if ( ! defined( 'FE_CSV_IMPORT_EXPORT_PLUGIN_DIR' ) ) {
  */
 function fe_csv_import_export_uninstall() {
 	global $wpdb;
+
+	// Uploaded CSVs and dry run diff files are transient runtime artifacts;
+	// remove them unconditionally before checking the data preference.
+	fe_csv_import_export_remove_temp_directory();
 
 	// Check if user wants to remove all data.
 	$remove_all_data = true; // Default to true for backward compatibility.
@@ -51,17 +91,17 @@ function fe_csv_import_export_uninstall() {
 		'fe_csv_import_export_version',
 		'fe_csv_import_export_db_version',
 		'fe_csv_import_export_settings',
-		'fe_csv_import_export_pro_license', // Also remove license data
-		'fe_csv_import_export_encryption_key', // Remove encryption key
-		'fe_csv_import_export_purged_legacy_uploads', // Legacy upload purge flag
+		'fe_csv_import_export_pro_license', // Also remove license data.
+		'fe_csv_import_export_encryption_key', // Remove encryption key.
+		'fe_csv_import_export_purged_legacy_uploads', // Legacy upload purge flag.
 	];
 
 	foreach ( $options as $option ) {
 		delete_option( $option );
 	}
 
-	// Delete transients
-	// Note: WordPress automatically cleans expired transients, but we clean them explicitly
+	// Delete transients.
+	// Note: WordPress automatically cleans expired transients, but we clean them explicitly.
 	global $wpdb;
     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 	$wpdb->delete(
@@ -76,9 +116,9 @@ function fe_csv_import_export_uninstall() {
 		[ 'option_name' => 'LIKE' ]
 	);
 
-	// Clear any cached data
+	// Clear any cached data.
 	wp_cache_flush();
 }
 
-// Run uninstall cleanup
+// Run uninstall cleanup.
 fe_csv_import_export_uninstall();

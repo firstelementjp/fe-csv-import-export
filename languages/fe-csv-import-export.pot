@@ -827,3 +827,52 @@ msgstr ""
 #: includes/admin/class-fe-csv-import-export-admin-assets.php:300
 msgid "Yes"
 msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:357
+msgid "Diff:"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-page.php:373
+#: includes/admin/class-fe-csv-import-export-admin-assets.php
+msgid "Run a Dry Run to preview field changes."
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-assets.php
+msgid "Diff summary"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-assets.php
+msgid "Rows with changes"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-assets.php
+msgid "Rows without changes"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-assets.php
+msgid "New rows"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-assets.php
+msgid "Field changes"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-assets.php
+msgid "No changes"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-assets.php
+msgid "(new)"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-assets.php
+msgid "(cleared)"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-assets.php
+msgid "more rows"
+msgstr ""
+
+#: includes/admin/class-fe-csv-import-export-admin-assets.php
+msgid "No diff data."
+msgstr ""

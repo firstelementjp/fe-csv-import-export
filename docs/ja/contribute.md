@@ -145,7 +145,7 @@ fe-csv-import-export/
 
 ## ヘルプ
 
-- トラブルシューティングについては [SKILL.md](../.github/skills/SKILL.md) を確認
+- トラブルシューティングについては [SKILL.md](https://github.com/firstelementjp/fe-csv-import-export/blob/main/.github/skills/SKILL.md) を確認
 - 類似の問題については既存の Issue を確認
 - バグ報告や機能リクエストが必要な場合は GitHub Issue を開く
 - WordPress コーディング標準ドキュメントを参照

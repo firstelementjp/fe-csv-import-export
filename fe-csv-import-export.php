@@ -116,6 +116,11 @@ function fe_csv_import_export_init() {
 		add_action( 'admin_init', [ 'FE_CSV_Import_Export_License_Handler', 'maybe_schedule_license_resync' ] );
 	}
 
+	if ( class_exists( 'FE_CSV_Import_Export_File_Util' ) ) {
+		FE_CSV_Import_Export_File_Util::register_temp_cleanup_cron();
+		add_action( 'admin_init', [ 'FE_CSV_Import_Export_File_Util', 'maybe_schedule_temp_cleanup' ] );
+	}
+
 	if ( is_admin() ) {
 		new FE_CSV_Import_Export_Admin();
 		add_action( 'admin_init', 'fe_csv_import_export_purge_legacy_uploads_once' );
@@ -165,6 +170,11 @@ function fe_csv_import_export_activate() {
 		FE_CSV_Import_Export_License_Handler::maybe_schedule_license_resync();
 	}
 
+	if ( class_exists( 'FE_CSV_Import_Export_File_Util' ) ) {
+		FE_CSV_Import_Export_File_Util::register_temp_cleanup_cron();
+		FE_CSV_Import_Export_File_Util::maybe_schedule_temp_cleanup();
+	}
+
 	// Create temp directory (with web access protection files) and cleanup old files.
 	$temp_dir = FE_CSV_Import_Export_File_Util::create_temp_directory();
 
@@ -177,6 +187,10 @@ function fe_csv_import_export_activate() {
 			}
 		}
 	}
+
+	// Sweep expired temp files as well; the daily cron keeps abandoned
+	// diff and upload files bounded even when no new CSV is uploaded.
+	FE_CSV_Import_Export_File_Util::cleanup_expired_temp_files( $temp_dir );
 }
 
 /**
@@ -192,5 +206,8 @@ function fe_csv_import_export_deactivate() {
 	wp_clear_scheduled_hook( 'fe_csv_import_export_process_batch' );
 	if ( class_exists( 'FE_CSV_Import_Export_License_Handler' ) ) {
 		FE_CSV_Import_Export_License_Handler::clear_license_resync_schedule();
+	}
+	if ( class_exists( 'FE_CSV_Import_Export_File_Util' ) ) {
+		FE_CSV_Import_Export_File_Util::clear_temp_cleanup_schedule();
 	}
 }

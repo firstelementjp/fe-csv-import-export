@@ -156,7 +156,7 @@ class FE_CSV_Import_Export_File_Util {
 
 			$file_path = $temp_dir . '/' . $file;
 
-			if ( strpos( $file, 'ajax-import-' ) !== 0 ) {
+			if ( strpos( $file, 'ajax-import-' ) !== 0 && strpos( $file, 'dry-run-diff-' ) !== 0 ) {
 				continue;
 			}
 
@@ -168,5 +168,131 @@ class FE_CSV_Import_Export_File_Util {
 				wp_delete_file( $file_path );
 			}
 		}
+	}
+
+	/**
+	 * Cron hook name for the periodic temp file cleanup.
+	 *
+	 * @since 1.0.4
+	 * @var string
+	 */
+	public const CRON_HOOK_TEMP_CLEANUP = 'fe_csv_import_export_temp_cleanup';
+
+	/**
+	 * Register wp-cron hook for temp file cleanup.
+	 *
+	 * @since 1.0.4
+	 * @return void
+	 */
+	public static function register_temp_cleanup_cron(): void {
+		add_action( self::CRON_HOOK_TEMP_CLEANUP, [ __CLASS__, 'cron_cleanup_expired_temp_files' ] );
+	}
+
+	/**
+	 * Schedule daily temp cleanup if not already scheduled.
+	 *
+	 * @since 1.0.4
+	 * @return void
+	 */
+	public static function maybe_schedule_temp_cleanup(): void {
+		if ( wp_next_scheduled( self::CRON_HOOK_TEMP_CLEANUP ) ) {
+			return;
+		}
+		wp_schedule_event( time(), 'daily', self::CRON_HOOK_TEMP_CLEANUP );
+	}
+
+	/**
+	 * Clear scheduled temp cleanup.
+	 *
+	 * @since 1.0.4
+	 * @return void
+	 */
+	public static function clear_temp_cleanup_schedule(): void {
+		wp_clear_scheduled_hook( self::CRON_HOOK_TEMP_CLEANUP );
+	}
+
+	/**
+	 * Cron callback: remove expired dry run diff files.
+	 *
+	 * Resolves the temp directory without creating it, so a site that never
+	 * imported does not gain an empty directory from the daily sweep.
+	 *
+	 * @since 1.0.4
+	 * @return void
+	 */
+	public static function cron_cleanup_expired_temp_files(): void {
+		$upload_dir = wp_upload_dir();
+		if ( ! empty( $upload_dir['error'] ) || empty( $upload_dir['basedir'] ) ) {
+			return;
+		}
+		self::cleanup_expired_temp_files( $upload_dir['basedir'] . '/fe-csv-import-export-temp' );
+	}
+
+	/**
+	 * Delete expired temporary files in the temp directory.
+	 *
+	 * Two independent lifetimes apply:
+	 * - dry-run-diff-*.jsonl feed the downloadable Dry Run diff CSV, so they
+	 *   are kept for a fixed lifetime instead of relying solely on the next
+	 *   upload sweep.
+	 * - ajax-import-*.csv are normally removed when the import completes,
+	 *   errors out, or a new file is uploaded. The longer TTL only sweeps
+	 *   files left behind by abandoned import sessions, so it deliberately
+	 *   stays generous to keep paused imports resumable.
+	 *
+	 * @since 1.0.4
+	 * @param string $temp_dir Temporary directory path.
+	 * @return int Number of deleted files.
+	 */
+	public static function cleanup_expired_temp_files( string $temp_dir ): int {
+		if ( ! is_dir( $temp_dir ) ) {
+			return 0;
+		}
+
+		/**
+		 * Filters the lifetime of dry run diff JSONL files in seconds.
+		 *
+		 * @since 1.0.4
+		 * @param int $ttl Seconds a diff file is kept. Default 7 days.
+		 */
+		$diff_ttl = (int) apply_filters( 'fe_csv_import_export_dry_run_diff_ttl', 7 * DAY_IN_SECONDS );
+
+		/**
+		 * Filters the lifetime of uploaded import CSV temp files in seconds.
+		 *
+		 * Only files left behind by abandoned import sessions reach this age;
+		 * completed imports delete the upload on their final batch.
+		 *
+		 * @since 1.0.4
+		 * @param int $ttl Seconds an upload is kept. Default 30 days.
+		 */
+		$import_ttl = (int) apply_filters( 'fe_csv_import_export_import_temp_ttl', 30 * DAY_IN_SECONDS );
+
+		$deleted  = self::delete_files_older_than( $temp_dir . '/dry-run-diff-*.jsonl', $diff_ttl );
+		$deleted += self::delete_files_older_than( $temp_dir . '/ajax-import-*.csv', $import_ttl );
+
+		return $deleted;
+	}
+
+	/**
+	 * Delete files matching a glob pattern that are older than a TTL.
+	 *
+	 * @since 1.0.4
+	 * @param string $pattern Glob pattern matching the files to sweep.
+	 * @param int    $ttl     Maximum file age in seconds.
+	 * @return int Number of deleted files.
+	 */
+	private static function delete_files_older_than( string $pattern, int $ttl ): int {
+		$cutoff  = time() - max( 0, $ttl );
+		$deleted = 0;
+
+		foreach ( (array) glob( $pattern ) as $file_path ) {
+			$mtime = is_string( $file_path ) && is_file( $file_path ) ? filemtime( $file_path ) : false;
+			if ( false !== $mtime && $mtime < $cutoff && wp_delete_file( $file_path ) ) {
+				++$deleted;
+			}
+		}
+
+		return $deleted;
 	}
 }

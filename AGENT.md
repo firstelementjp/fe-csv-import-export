@@ -10,7 +10,7 @@ Supports custom post types, custom taxonomies, and custom fields.
 
 - **Version**: 1.0.3
 - **License**: GPL-2.0+
-- **PHP**: >= 8.1 (recommended)
+- **PHP**: >= 7.4
 - **Repository**: https://github.com/firstelementjp/fe-csv-import-export
 
 ## Architecture
