@@ -2,7 +2,7 @@
 
 ![FE CSV Import & Export Banner](https://firstelementjp.github.io/fe-csv-import-export/assets/images/img-sns-banner-80.jpg)
 
-[![Version](https://img.shields.io/badge/version-1.0.3-green.svg)](https://github.com/firstelementjp/fe-csv-import-export/releases)
+[![Version](https://img.shields.io/badge/version-1.1.0-green.svg)](https://github.com/firstelementjp/fe-csv-import-export/releases)
 [![License](https://img.shields.io/badge/License-GPLv2%2B-blue.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
 [![WordPress](https://img.shields.io/badge/WordPress-6.6%2B-blue.svg)](https://wordpress.org/)
 [![Ask DeepWiki](https://img.shields.io/badge/Ask-DeepWiki-blue)](https://deepwiki.com/firstelementjp/fe-csv-import-export)
@@ -15,11 +15,9 @@ For end-user guides and full documentation, see the links below.
 
 ## ✨ Recent Highlights
 
-- Taxonomy optimization for unchanged terms significantly reduces processing time for update-heavy imports
-- Increased default import batch size from 100 to 500 rows to reduce AJAX overhead
-- Added configurable batch size limit filter for per-site customization
-- Detailed import profiling with WP_DEBUG batch profile logging for performance analysis
-- Fixed JavaScript ES module import syntax to resolve browser compatibility issues
+- Dry Run diff preview shows per-field before/after changes for every row before an import is applied
+- New extension hooks (`fe_csv_import_export_response_handler`, `fe_csv_import_export_import_file_path`, `fe_csv_import_export_import_csv_store_ttl`, `fe_csv_import_export_import_batch_completed`) enable Pro scheduled import/export jobs
+- Temporary import files are cleaned up automatically on a TTL basis, including a sweep on plugin uninstall
 
 ## 📖 Overview
 

@@ -1,5 +1,20 @@
 # 📋 Changelog
 
+## [1.1.0] - 2026-11-23
+
+### ✨ New Features
+
+- **Dry Run diff preview** - A test import now computes and displays a per-field before/after diff for every row (post fields, taxonomy terms, and `cf_` custom fields), so you can verify exactly what will change before applying the import.
+- **Extension hooks for scheduled execution** - New filters `fe_csv_import_export_response_handler`, `fe_csv_import_export_import_file_path`, and `fe_csv_import_export_import_csv_store_ttl`, plus the `fe_csv_import_export_import_batch_completed` action, let the Pro version (1.1.0+) run one-time scheduled imports and exports.
+- **Automatic temporary file cleanup** - Uploaded import CSVs and stored Dry Run diff data are removed on a TTL basis (configurable via `fe_csv_import_export_import_csv_store_ttl`), and leftover files are swept on plugin uninstall.
+
+### 🔧 Maintenance
+
+- Post GUIDs are now updated via a direct query instead of `wp_update_post()` during import, avoiding unnecessary hook execution.
+- Bumped `actions/setup-node` in CI workflows.
+
+---
+
 ## [1.0.3] - 2026-11-09
 
 ### 🔒 Security Fixes
