@@ -127,9 +127,21 @@ abstract class FE_CSV_Import_Export_Import_Base {
 		?FE_CSV_Import_Export_Import_Taxonomy_Util $taxonomy_util = null,
 		?FE_CSV_Import_Export_Import_Cancel_Manager $cancel_manager = null
 	) {
-		$this->taxonomy_util    = $taxonomy_util ?? new FE_CSV_Import_Export_Import_Taxonomy_Util();
-		$this->log_store        = $log_store ?? new FE_CSV_Import_Export_Import_Log_Store();
-		$this->csv_store        = $csv_store ?? new FE_CSV_Import_Export_Import_Csv_Store();
+		$this->taxonomy_util = $taxonomy_util ?? new FE_CSV_Import_Export_Import_Taxonomy_Util();
+		$this->log_store     = $log_store ?? new FE_CSV_Import_Export_Import_Log_Store();
+		$this->csv_store     = $csv_store ?? new FE_CSV_Import_Export_Import_Csv_Store(
+			/**
+			 * Filter the TTL of the transient that stores parsed CSV metadata
+			 * between import batches.
+			 *
+			 * The Pro version's scheduled import runner increases this value so
+			 * that long-running background jobs do not lose their stream offsets.
+			 *
+			 * @since 1.0.4
+			 * @param int $ttl Transient TTL in seconds (default 3600).
+			 */
+			(int) apply_filters( 'fe_csv_import_export_import_csv_store_ttl', 3600 )
+		);
 		$this->csv_util         = $csv_util ?? new FE_CSV_Import_Export_Import_Csv();
 		$this->csv_parser       = $csv_parser ?? new FE_CSV_Import_Export_Import_Csv_Parser( $this->taxonomy_util );
 		$this->file_processor   = $file_processor ?? new FE_CSV_Import_Export_Import_File_Processor();

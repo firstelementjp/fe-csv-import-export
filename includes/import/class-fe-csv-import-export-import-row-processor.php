@@ -23,17 +23,28 @@ class FE_CSV_Import_Export_Import_Row_Processor {
 	/**
 	 * Update GUID for newly inserted posts.
 	 *
+	 * Uses a direct query like wp_insert_post() does internally instead of
+	 * wp_update_post(), so 'save_post' and the other post-update hooks do
+	 * not fire for every imported row.
+	 *
 	 * @since 0.9.0
 	 * @param int $post_id Post ID.
 	 * @return void
 	 */
 	private function update_guid_for_new_post( int $post_id ): void {
-		wp_update_post(
-			[
-				'ID'   => $post_id,
-				'guid' => get_permalink( $post_id ),
-			]
+		global $wpdb;
+
+		// Direct GUID update mirrors wp_insert_post() behavior; cache is cleaned below.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->update(
+			$wpdb->posts,
+			[ 'guid' => get_permalink( $post_id ) ],
+			[ 'ID' => $post_id ],
+			[ '%s' ],
+			[ '%d' ]
 		);
+
+		clean_post_cache( $post_id );
 	}
 
 	/**
