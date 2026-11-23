@@ -8,7 +8,7 @@
 **FE CSV Import & Export** is a WordPress plugin for CSV import/export.
 Supports custom post types, custom taxonomies, and custom fields.
 
-- **Version**: 1.0.3
+- **Version**: 1.1.0
 - **License**: GPL-2.0+
 - **PHP**: >= 7.4
 - **Repository**: https://github.com/firstelementjp/fe-csv-import-export
@@ -35,14 +35,28 @@ includes/
     class-fe-csv-import-export-export-wp-compatible.php       # WP-compatible export implementation
     class-fe-csv-import-export-export-log-store.php           # Export log persistence
   import/
-    class-fe-csv-import-export-ajax-import-unified.php        # Import AJAX entry point
+    class-fe-csv-import-export-ajax-import-unified.php        # Import AJAX entry point (routes to import method)
     class-fe-csv-import-export-ajax-import-handler-wp-compatible.php # WP-compatible import handler
+    class-fe-csv-import-export-ajax-import-batch-planner.php  # Shared batch-size planning
     class-fe-csv-import-export-import-base.php                # Import base class
+    class-fe-csv-import-export-import-batch-processor-base.php # Batch processor template method
     class-fe-csv-import-export-import-batch-processor.php     # Import batch processing engine
+    class-fe-csv-import-export-import-cancel-manager.php      # Import cancellation flags
+    class-fe-csv-import-export-import-csv.php                 # CSV parsing utilities
     class-fe-csv-import-export-import-csv-parser.php          # Streamed CSV parsing and batch reads
+    class-fe-csv-import-export-import-csv-store.php           # Transient-based parsed CSV storage
+    class-fe-csv-import-export-import-dry-run-diff.php        # Dry Run diff computation and persistence
+    class-fe-csv-import-export-import-file-processor.php      # Uploaded file processing
+    class-fe-csv-import-export-import-meta-tax.php            # Batched meta/taxonomy preparation and application
+    class-fe-csv-import-export-import-persister.php           # wp_posts row persistence
+    class-fe-csv-import-export-import-request-parser.php      # Import request parsing and sanitizing
+    class-fe-csv-import-export-import-response-manager.php    # Import AJAX response assembly
     class-fe-csv-import-export-import-wp-compatible.php       # WP-compatible import implementation
     class-fe-csv-import-export-import-row-context.php         # Import row context management
     class-fe-csv-import-export-import-row-processor.php       # Import row processing
+    class-fe-csv-import-export-import-taxonomy-util.php       # Import taxonomy helpers
+    class-fe-csv-import-export-import-taxonomy-writer-interface.php # Taxonomy writer interface
+    class-fe-csv-import-export-import-taxonomy-writer-wp.php  # WP-compatible taxonomy writer
     class-fe-csv-import-export-import-log-store.php           # Import log persistence
 assets/
   js/fe-csv-import-export-core.js                    # Shared JS utilities

@@ -4,7 +4,7 @@ Tags: csv, import, export, custom post types, custom fields
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.3
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,6 +134,13 @@ No. The free version works on its own. A Pro version is available separately for
 4. License management and Pro version features
 
 == Changelog ==
+
+= 1.1.0 =
+
+* **Added Dry Run diff preview** - A test import now shows a per-field before/after diff for each row, so you can verify exactly what will change before applying it.
+* **Added extension hooks for scheduled execution** - New filters (response handler, import file path, CSV store TTL) and a batch-completed action let the Pro version run one-time scheduled imports and exports.
+* **Automatic temporary file cleanup** - Import temporary files are removed on a TTL basis, and remaining files are swept on plugin uninstall.
+* Updated development tooling.
 
 = 1.0.3 =
 

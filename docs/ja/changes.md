@@ -1,5 +1,20 @@
 # 📋 変更履歴
 
+## [1.1.0] - 2026-11-23
+
+### ✨ 新機能
+
+- **テスト差分プレビュー** - テストインポート実行時に、各行のフィールド単位の変更前/変更後の差分（投稿フィールド・タクソノミー・`cf_` カスタムフィールド）を表示。インポート適用前に変更内容を正確に確認できます
+- **予約実行用の拡張フック** - 新規フィルター `fe_csv_import_export_response_handler`、`fe_csv_import_export_import_file_path`、`fe_csv_import_export_import_csv_store_ttl` とアクション `fe_csv_import_export_import_batch_completed` により、Pro版（1.1.0以降）で1回限りの予約インポート・エクスポートが可能になります
+- **一時ファイルの自動クリーンアップ** - アップロードされたインポートCSVと保存されたテスト差分データをTTLベースで削除します（`fe_csv_import_export_import_csv_store_ttl` で設定可能）。プラグインのアンインストール時にも残存ファイルを一括削除します
+
+### 🔧 メンテナンス
+
+- インポート時の投稿GUID更新を `wp_update_post()` から直接クエリに変更し、不要なフック実行を回避しました
+- CIワークフローの `actions/setup-node` を更新しました
+
+---
+
 ## [1.0.3] - 2026-11-09
 
 ### 🔒 セキュリティ修正
