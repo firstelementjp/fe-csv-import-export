@@ -45,6 +45,25 @@ class FE_CSV_Import_Export_Import_File_Processor {
 	 * @return array{file_path:string}|null File path or null on error.
 	 */
 	public function handle_upload(): ?array {
+		/**
+		 * Filter to inject a pre-staged import file path, skipping the upload flow.
+		 *
+		 * Used by the Pro version's scheduled import runner, where the CSV file has
+		 * already been uploaded and stored in a job-specific directory. Returning a
+		 * non-empty readable path bypasses nonce verification and file upload.
+		 *
+		 * @since 1.0.4
+		 * @param string $file_path Pre-staged file path (empty by default).
+		 */
+		$injected_path = apply_filters( 'fe_csv_import_export_import_file_path', '' );
+		if ( is_string( $injected_path ) && '' !== $injected_path ) {
+			if ( ! is_readable( $injected_path ) ) {
+				FE_CSV_Import_Export_Ajax_Util::send_error_response( 'Import file not found: ' . basename( $injected_path ) );
+				return null;
+			}
+			return [ 'file_path' => $injected_path ];
+		}
+
 		// Verify nonce.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';

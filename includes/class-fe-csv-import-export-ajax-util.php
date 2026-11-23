@@ -93,6 +93,22 @@ class FE_CSV_Import_Export_Ajax_Util {
 	}
 
 	/**
+	 * Reset per-request response state.
+	 *
+	 * The Pro version's scheduled job runner drives multiple import/export
+	 * batches inside a single PHP process. Without a reset, the
+	 * {@see self::$response_sent} flag set by the first batch would suppress
+	 * error responses in subsequent batches.
+	 *
+	 * @since 1.0.4
+	 * @return void
+	 */
+	public static function reset_response_state(): void {
+		self::$response_sent = false;
+		self::$stage         = '';
+	}
+
+	/**
 	 * Register shutdown handler to send JSON when a fatal error occurs.
 	 *
 	 * This helps avoid "Unexpected end of JSON input" on the client when PHP
@@ -234,15 +250,19 @@ class FE_CSV_Import_Export_Ajax_Util {
 			wp_delete_file( $file_path );
 		}
 
+		$payload = [
+			'success' => false,
+			'error'   => $error_message,
+		];
+
+		if ( self::invoke_response_handler( $payload ) ) {
+			return;
+		}
+
 		self::cleanup_output_buffers();
 		self::$response_sent = true;
 
-		wp_send_json(
-			[
-				'success' => false,
-				'error'   => $error_message,
-			]
-		);
+		wp_send_json( $payload );
 	}
 
 	/**
@@ -255,9 +275,51 @@ class FE_CSV_Import_Export_Ajax_Util {
 	 * @return void
 	 */
 	public static function send_json( array $payload ): void {
+		if ( self::invoke_response_handler( $payload ) ) {
+			return;
+		}
+
 		self::cleanup_output_buffers();
 		self::$response_sent = true;
 		wp_send_json( $payload );
+	}
+
+	/**
+	 * Invoke a registered response handler before the response is sent.
+	 *
+	 * The Pro version's scheduled job runner installs a callable through the
+	 * {@see 'fe_csv_import_export_response_handler'} filter so engine
+	 * responses are captured (via a thrown exception) instead of being sent
+	 * through wp_send_json()/wp_die(). The handler is invoked before output
+	 * buffer cleanup so buffers owned by the caller are never destroyed.
+	 *
+	 * @since 1.0.4
+	 * @param array $payload JSON payload about to be sent.
+	 * @return bool True when a handler consumed the payload and the caller
+	 *              should not send a response.
+	 */
+	private static function invoke_response_handler( array $payload ): bool {
+		/**
+		 * Filter the response handler used for AJAX JSON responses.
+		 *
+		 * Returning a callable replaces the default wp_send_json() flow; the
+		 * callable receives the payload array. The Pro scheduled job runner
+		 * uses this to capture engine responses inside a single PHP process.
+		 *
+		 * @since 1.0.4
+		 * @param callable|null $handler Response handler callable or null.
+		 * @param array         $payload JSON payload about to be sent.
+		 */
+		$handler = apply_filters( 'fe_csv_import_export_response_handler', null, $payload );
+		if ( ! is_callable( $handler ) ) {
+			return false;
+		}
+
+		// A well-behaved handler throws to abort the response flow; when it
+		// returns normally we still treat the payload as consumed so the
+		// default send path stays suppressed inside the scoped invocation.
+		$handler( $payload );
+		return true;
 	}
 
 	/**
