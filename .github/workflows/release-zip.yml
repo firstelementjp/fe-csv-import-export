@@ -43,7 +43,11 @@ jobs:
               run: |
                   rm -rf release
                   mkdir -p release
-                  ZIP_VERSION="${GITHUB_REF_NAME#v}"
+                  if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+                      ZIP_VERSION="${GITHUB_REF_NAME#v}"
+                  else
+                      ZIP_VERSION=$(grep -m1 'Version:' fe-csv-import-export.php | awk '{print $NF}')
+                  fi
                   ZIP_FILE="fe-csv-import-export-${ZIP_VERSION}.zip"
 
                   # Create release tree from git (respects .gitattributes export-ignore).
