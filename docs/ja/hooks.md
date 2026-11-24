@@ -18,6 +18,10 @@
     - [権限と検証](#権限と検証)
     - [フィールド準備とマッピング](#フィールド準備とマッピング)
     - [バッチ処理](#バッチ処理)
+    - [スケジュール実行シーム](#スケジュール実行シーム)
+    - [Dry Run プレビューと一時ファイル](#dry-run-プレビューと一時ファイル)
+    - [フェーズ化インポートアクション](#フェーズ化インポートアクション)
+    - [行の検証と正規化](#行の検証と正規化)
     - [ログと診断](#ログと診断)
 - [管理/UI フック](#管理ui-フック)
 - [機能フラグ](#機能フラグ)
@@ -374,6 +378,37 @@ function my_swiftcsv_export_batch_size($batch_size, $total_count, $post_type, $c
 }
 ```
 
+#### `fe_csv_import_export_export_batch_prepare`
+
+WP互換エクスポートの各バッチ処理前に、投稿オブジェクトがロードされた状態で発火されるアクション。
+
+**タイプ:** action
+
+**シグネチャ:**
+
+```php
+do_action('fe_csv_import_export_export_batch_prepare', array $post_ids, array $posts, array $headers, array $config, string $context): void
+```
+
+**パラメータ:**
+
+- `$post_ids` (`array<int>`) このバッチの投稿 ID
+- `$posts` (`array`) バッチ分のロード済み `WP_Post` オブジェクト
+- `$headers` (`array<string>`) エクスポートヘッダー
+- `$config` (`array`) エクスポート設定
+- `$context` (`string`) 現在は `wp_compatible`
+
+**例:** (バッチ単位で外部データを事前ロード)
+
+```php
+add_action('fe_csv_import_export_export_batch_prepare', 'my_swiftcsv_export_batch_prepare', 10, 5);
+
+function my_swiftcsv_export_batch_prepare($post_ids, $posts, $headers, $config, $context) {
+    // 例: バッチ全体のカスタム参照テーブルを事前準備
+    my_prime_external_cache($post_ids);
+}
+```
+
 ---
 
 ## インポートフック
@@ -437,6 +472,36 @@ function my_swiftcsv_business_hours_check($result, $post_data) {
 }
 ```
 
+#### `fe_csv_import_export_import_row_validation`
+
+行レベルの検証フィルター。
+
+**タイプ:** filter
+
+**シグネチャ:**
+
+```php
+apply_filters('fe_csv_import_export_import_row_validation', array $row_validation, array $row_context, array $context): array
+```
+
+**例:** (新規作成時に `post_title` を必須化)
+
+```php
+add_filter('fe_csv_import_export_import_row_validation', 'my_swiftcsv_validate_row', 10, 3);
+
+function my_swiftcsv_validate_row($row_validation, $row_context, $context) {
+    $post_fields = (array) ($row_context['post_fields_from_csv'] ?? []);
+    $is_update = !empty($row_context['is_update']);
+
+    if (!$is_update && empty($post_fields['post_title'])) {
+        $row_validation['valid'] = false;
+        $row_validation['errors'][] = 'post_title is required for new posts.';
+    }
+
+    return $row_validation;
+}
+```
+
 ### フィールド準備とマッピング
 
 #### `fe_csv_import_export_prepare_import_fields`
@@ -472,6 +537,125 @@ function my_swiftcsv_process_custom_fields($meta_fields, $post_id, $args) {
 }
 ```
 
+#### `fe_csv_import_export_filter_sample_posts`
+
+インポートフィールド検出に使われるサンプル投稿 ID をフィルターします。
+
+**タイプ:** filter
+
+**シグネチャ:**
+
+```php
+apply_filters('fe_csv_import_export_filter_sample_posts', array $post_ids, array $args): array
+```
+
+**パラメータ:**
+
+- `$post_ids` (`array<int>`) サンプル投稿 ID（デフォルトは空）
+- `$args` (`array`) コンテキスト
+    - `post_type` (`string`)
+    - `context` (`string`) 現在は `import_field_detection`
+
+#### `fe_csv_import_export_allow_protected_meta_import`
+
+アンダースコアで始まるメタキー（保護メタ）のインポートを許可します。デフォルトでは無効です。
+
+**タイプ:** filter
+
+**シグネチャ:**
+
+```php
+apply_filters('fe_csv_import_export_allow_protected_meta_import', bool $allow): bool
+```
+
+**パラメータ:**
+
+- `$allow` (`bool`) デフォルト `false`
+
+**⚠️ セキュリティ注意:** 保護メタにはプラグイン内部値（`_edit_lock`、ACFのフィールドキーなど）が含まれます。信頼できる移行用途に限定してください。
+
+#### `fe_csv_import_export_import_data_filter`
+
+パースされた生の行データを正規化/フィルターします。
+
+**タイプ:** filter
+
+**シグネチャ:**
+
+```php
+apply_filters('fe_csv_import_export_import_data_filter', array $filtered_data, array $original_data, array $context): array
+```
+
+**例:** (フィールドをトリム)
+
+```php
+add_filter('fe_csv_import_export_import_data_filter', 'my_swiftcsv_import_data_filter', 10, 3);
+
+function my_swiftcsv_import_data_filter($filtered_data, $original_data, $context) {
+    $data = (array) ($filtered_data['data'] ?? []);
+    foreach ($data as $i => $value) {
+        $data[$i] = is_string($value) ? trim($value) : $value;
+    }
+
+    $filtered_data['data'] = $data;
+    return $filtered_data;
+}
+```
+
+#### `fe_csv_import_export_import_field_mapping`
+
+ヘッダーと行値から収集されたメタ/タクソノミーフィールドをフィルターします。
+
+**タイプ:** filter
+
+**シグネチャ:**
+
+```php
+apply_filters('fe_csv_import_export_import_field_mapping', array $collected_fields, array $headers, array $data, array $allowed_post_fields): array
+```
+
+**例:** (メタキーをリネーム)
+
+```php
+add_filter('fe_csv_import_export_import_field_mapping', 'my_swiftcsv_import_field_mapping', 10, 4);
+
+function my_swiftcsv_import_field_mapping($collected_fields, $headers, $data, $allowed_post_fields) {
+    if (isset($collected_fields['meta_fields']['old_key'])) {
+        $collected_fields['meta_fields']['new_key'] = $collected_fields['meta_fields']['old_key'];
+        unset($collected_fields['meta_fields']['old_key']);
+    }
+
+    return $collected_fields;
+}
+```
+
+#### `fe_csv_import_export_process_custom_fields`
+
+フィールド準備と投稿永続化の後に呼び出される、後方互換用のアクション。
+
+**タイプ:** action
+
+**シグネチャ:**
+
+```php
+do_action('fe_csv_import_export_process_custom_fields', int $post_id, array $prepared_meta_fields): void
+```
+
+**例:** (ACF 更新)
+
+```php
+add_action('fe_csv_import_export_process_custom_fields', 'my_swiftcsv_process_custom_fields', 10, 2);
+
+function my_swiftcsv_process_custom_fields($post_id, $prepared_meta_fields) {
+    // 例: ACF と安全に連携
+    if (function_exists('update_field') && isset($prepared_meta_fields['my_acf_field'])) {
+        update_field('my_acf_field', $prepared_meta_fields['my_acf_field'], $post_id);
+    }
+}
+```
+
+### バッチ処理
+
 #### `fe_csv_import_export_import_batch_size`
 
 インポートバッチサイズをフィルターします。
@@ -505,6 +689,262 @@ function my_swiftcsv_optimize_batch_size($batch_size, $total_rows, $config) {
 }
 ```
 
+#### `fe_csv_import_export_import_max_batch_size`
+
+インポートバッチサイズに適用されるハード上限をフィルターします。
+
+**タイプ:** filter
+
+**シグネチャ:**
+
+```php
+apply_filters('fe_csv_import_export_import_max_batch_size', int $max_batch_size, int $total_rows, array $config): int
+```
+
+**パラメータ:**
+
+- `$max_batch_size` (`int`) バッチサイズの上限（デフォルト 500）
+- `$total_rows` (`int`) 処理する総行数
+- `$config` (`array`) インポート設定
+
+#### `fe_csv_import_export_import_batch_completed`
+
+各インポートバッチが永続化された後に発火されるアクション。
+
+**タイプ:** action — **1.1.0 以降**
+
+**シグネチャ:**
+
+```php
+do_action('fe_csv_import_export_import_batch_completed', array $post_ids, array $context): void
+```
+
+**パラメータ:**
+
+- `$post_ids` (`array<int, int>`) このバッチで永続化された投稿 ID
+- `$context` (`array`) バッチコンテキスト
+    - `post_type` (`string`)
+    - `import_session` (`string`)
+    - `start_row` (`int`)
+    - `dry_run` (`bool`)
+    - `batch_size` (`int`)
+
+インポートは直接クエリで投稿を書き込むため、インポート行では `save_post` が発火しません。投稿変更に反応する連携（検索インデクサーなど）はここにフックしてください。
+
+**例:** (インポート済み投稿を再インデックス)
+
+```php
+add_action('fe_csv_import_export_import_batch_completed', 'my_swiftcsv_reindex_batch', 10, 2);
+
+function my_swiftcsv_reindex_batch($post_ids, $context) {
+    if (!empty($context['dry_run'])) {
+        return;
+    }
+    my_search_indexer_update($post_ids);
+}
+```
+
+### スケジュール実行シーム
+
+これらの拡張ポイント（すべて **1.1.0 以降**）は、FE CSV Import & Export Pro が1回限りの予約インポート/エクスポートを実行するためのものです。主に Pro プラグインが消費する用途を想定しています。
+
+#### `fe_csv_import_export_response_handler`
+
+JSON レスポンス送信前に呼び出されるハンドラーをフィルターします。callable を返すと、デフォルトの `wp_send_json()` フローが置き換えられます。
+
+**タイプ:** filter
+
+**シグネチャ:**
+
+```php
+apply_filters('fe_csv_import_export_response_handler', callable|null $handler, array $payload): callable|null
+```
+
+**パラメータ:**
+
+- `$handler` (`callable|null`) レスポンスハンドラー callable または `null`
+- `$payload` (`array`) 送信予定の JSON ペイロード
+
+Pro のスケジュールジョブランナーは、単一 PHP プロセス内で `wp_send_json()`/`wp_die()` を実行せずにエンジンのレスポンスを（例外スロー経由で）捕捉するためにこの callable を登録します。
+
+#### `fe_csv_import_export_import_file_path`
+
+事前配置済みのインポートファイルパスを注入し、アップロードフローと nonce 検証をスキップするフィルター。
+
+**タイプ:** filter
+
+**シグネチャ:**
+
+```php
+apply_filters('fe_csv_import_export_import_file_path', string $file_path): string
+```
+
+**パラメータ:**
+
+- `$file_path` (`string`) 事前配置済みファイルパス（デフォルトは空）。空でない読み取り可能なパスを返すと、nonce 検証とファイルアップロードがバイパスされます
+
+Pro の予約インポートランナーは、ジョブ用にステージングされた CSV パスをここで返します。
+
+**⚠️ セキュリティ注意:** 信頼できるサーバーサイドコードからのみパスを返してください。このフィルターは設計上、アップロード時の nonce 検証をバイパスします。
+
+#### `fe_csv_import_export_import_csv_store_ttl`
+
+インポートバッチ間でパース済み CSV メタデータを保持する transient の TTL をフィルターします。
+
+**タイプ:** filter
+
+**シグネチャ:**
+
+```php
+apply_filters('fe_csv_import_export_import_csv_store_ttl', int $ttl): int
+```
+
+**パラメータ:**
+
+- `$ttl` (`int`) transient の TTL 秒数（デフォルト `3600`）
+
+Pro の予約インポートランナーは、長時間実行されるバックグラウンドジョブがストリームオフセットを失わないようこの値を延長します。
+
+### Dry Run プレビューと一時ファイル
+
+#### `fe_csv_import_export_dry_run_log_limit`
+
+Dry Run 中に保持する行単位ログエントリの最大数をフィルターします。
+
+**タイプ:** filter
+
+**シグネチャ:**
+
+```php
+apply_filters('fe_csv_import_export_dry_run_log_limit', int $limit): int
+```
+
+**パラメータ:**
+
+- `$limit` (`int`) デフォルト `50`
+
+#### `fe_csv_import_export_dry_run_diff_row_limit`
+
+管理画面の Diff プレビューに描画する差分行の最大数をフィルターします。
+
+**タイプ:** filter — **1.1.0 以降**
+
+**シグネチャ:**
+
+```php
+apply_filters('fe_csv_import_export_dry_run_diff_row_limit', int $limit): int
+```
+
+**パラメータ:**
+
+- `$limit` (`int`) デフォルト `100`。プレビュー表示にのみ影響し、保存される差分データは常に全行をカバーします
+
+#### `fe_csv_import_export_dry_run_diff_value_max_length`
+
+Dry Run 差分に保存される変更前/変更後の値の最大長をフィルターします。
+
+**タイプ:** filter — **1.1.0 以降**
+
+**シグネチャ:**
+
+```php
+apply_filters('fe_csv_import_export_dry_run_diff_value_max_length', int $max_chars): int
+```
+
+**パラメータ:**
+
+- `$max_chars` (`int`) デフォルト `500` 文字。これを超える値は差分出力で切り詰められます
+
+#### `fe_csv_import_export_dry_run_diff_ttl`
+
+Dry Run 差分 JSONL ファイルの保持期間をフィルターします。
+
+**タイプ:** filter — **1.1.0 以降**
+
+**シグネチャ:**
+
+```php
+apply_filters('fe_csv_import_export_dry_run_diff_ttl', int $ttl): int
+```
+
+**パラメータ:**
+
+- `$ttl` (`int`) 差分ファイルの保持秒数。デフォルト `7 * DAY_IN_SECONDS`
+
+#### `fe_csv_import_export_import_temp_ttl`
+
+アップロードされたインポート CSV 一時ファイルの保持期間をフィルターします。
+
+**タイプ:** filter — **1.1.0 以降**
+
+**シグネチャ:**
+
+```php
+apply_filters('fe_csv_import_export_import_temp_ttl', int $ttl): int
+```
+
+**パラメータ:**
+
+- `$ttl` (`int`) アップロードファイルの保持秒数。デフォルト `30 * DAY_IN_SECONDS`。放棄されたインポートセッションの残存ファイルのみがこの期間に達します。完了したインポートは最終バッチでアップロードを削除します
+
+### フェーズ化インポートアクション
+
+インポートは `do_action` によるフェーズモデルを公開しています。可観測性と連携用途を想定しています。
+
+#### `fe_csv_import_export_import_phase_normalize`
+
+**タイプ:** action
+
+**シグネチャ:**
+
+```php
+do_action('fe_csv_import_export_import_phase_normalize', array $filtered_data, array $context): void
+```
+
+#### `fe_csv_import_export_import_phase_validate`
+
+**タイプ:** action
+
+**シグネチャ:**
+
+```php
+do_action('fe_csv_import_export_import_phase_validate', array $row_validation, array $row_context, array $context): void
+```
+
+#### `fe_csv_import_export_import_phase_map`
+
+**タイプ:** action
+
+**シグネチャ:**
+
+```php
+do_action('fe_csv_import_export_import_phase_map', array $collected_fields, array $headers, array $data): void
+```
+
+#### `fe_csv_import_export_import_phase_map_prepared`
+
+フィールドマッピングが準備された後に発火されるアクション。
+
+**タイプ:** action
+
+**シグネチャ:**
+
+```php
+do_action('fe_csv_import_export_import_phase_map_prepared', int $post_id, array $prepared_meta_fields, array $prepare_args): void
+```
+
+#### `fe_csv_import_export_import_phase_post_persist`
+
+投稿データが永続化された後に発火されるアクション。
+
+**タイプ:** action
+
+**シグネチャ:**
+
+```php
+do_action('fe_csv_import_export_import_phase_post_persist', int $post_id, array $prepared_meta_fields, array $prepare_args): void
+```
+
 ---
 
 ## 管理/UI フック
@@ -532,6 +972,51 @@ do_action('fe_csv_import_export_settings_tabs', string $tab): void
 ```php
 do_action('fe_csv_import_export_settings_tabs_content', string $tab, array $import_results): void
 ```
+
+#### `fe_csv_import_export_after_import_settings_fields` / `fe_csv_import_export_after_export_settings_fields` / `fe_csv_import_export_after_advanced_settings_fields` / `fe_csv_import_export_after_license_settings_fields`
+
+各設定パネル内で発火し、拡張機能が独自のフィールドを追加できるアクション。
+
+**タイプ:** action
+
+**シグネチャ:**
+
+```php
+do_action('fe_csv_import_export_after_import_settings_fields', object $admin): void
+do_action('fe_csv_import_export_after_export_settings_fields', object $admin): void
+do_action('fe_csv_import_export_after_advanced_settings_fields', object $admin): void
+do_action('fe_csv_import_export_after_license_settings_fields', object $admin): void
+```
+
+**パラメータ:**
+
+- `$admin` (`object`) 管理インスタンス（`FE_CSV_Import_Export_Admin`）
+
+#### `fe_csv_import_export_after_export_button`
+
+エクスポート設定パネル内、エクスポート実行ボタンの直後に発火されるアクション。
+
+**タイプ:** action
+
+**シグネチャ:**
+
+```php
+do_action('fe_csv_import_export_after_export_button'): void
+```
+
+#### `fe_csv_import_export_after_import_log_panels`
+
+インポートログパネルの後に発火し、追加の結果パネルを描画できるアクション。
+
+**タイプ:** action — **1.1.0 以降**
+
+**シグネチャ:**
+
+```php
+do_action('fe_csv_import_export_after_import_log_panels'): void
+```
+
+組み込みの **Diff** パネルの直後に発火するため、拡張機能はその横に追加の結果パネルを描画できます。
 
 #### `fe_csv_import_export_export_form_action`
 
@@ -656,6 +1141,40 @@ add_filter('fe_csv_import_export_user_can_export', 'my_swiftcsv_export_permissio
 
 function my_swiftcsv_export_permission($can_export) {
     return current_user_can('manage_options') || current_user_can('export_csv');
+}
+```
+
+#### `fe_csv_import_export_pre_ajax_export`
+
+エクスポート前検証結果をフィルターします。
+
+**タイプ:** filter
+
+**シグネチャ:**
+
+```php
+apply_filters('fe_csv_import_export_pre_ajax_export', bool|WP_Error $result, array $post_data): bool|WP_Error
+```
+
+**パラメータ:**
+
+- `$result` (`bool|WP_Error`) 検証結果
+- `$post_data` (`array`) エクスポートリクエストからの POST データ
+
+**例:** (エクスポート回数制限を検証)
+
+```php
+add_filter('fe_csv_import_export_pre_ajax_export', 'my_swiftcsv_export_limits', 10, 2);
+
+function my_swiftcsv_export_limits($result, $post_data) {
+    $user_id = get_current_user_id();
+    $today_exports = get_transient('fe_csv_import_export_exports_' . $user_id) ?: 0;
+
+    if ($today_exports >= 10) {
+        return new WP_Error('daily_limit', 'Daily export limit reached (10 exports per day)');
+    }
+
+    return $result;
 }
 ```
 

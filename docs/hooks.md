@@ -18,6 +18,8 @@ It focuses on:
     - [Permission and validation](#permission-and-validation)
     - [Field preparation and mapping](#field-preparation-and-mapping)
     - [Batch processing](#batch-processing)
+    - [Scheduled execution seams](#scheduled-execution-seams)
+    - [Dry Run preview and temporary files](#dry-run-preview-and-temporary-files)
     - [Logging and diagnostics](#logging-and-diagnostics)
 - [Admin / UI Hooks](#admin--ui-hooks)
 - [Feature Flags](#feature-flags)
@@ -376,6 +378,37 @@ function my_swiftcsv_export_batch_size( $batch_size, $total_count, $post_type, $
 }
 ```
 
+#### `fe_csv_import_export_export_batch_prepare`
+
+Action fired before each WP-compatible export batch is processed, with the post objects already loaded.
+
+**Type:** action
+
+**Signature:**
+
+```php
+do_action( 'fe_csv_import_export_export_batch_prepare', array $post_ids, array $posts, array $headers, array $config, string $context ): void
+```
+
+**Parameters:**
+
+- `$post_ids` (`array<int>`) Post IDs in this batch.
+- `$posts` (`array`) Loaded `WP_Post` objects for the batch.
+- `$headers` (`array<string>`) Export headers.
+- `$config` (`array`) Export config.
+- `$context` (`string`) Currently `wp_compatible`.
+
+**Example:** (preload external data once per batch)
+
+```php
+add_action( 'fe_csv_import_export_export_batch_prepare', 'my_swiftcsv_export_batch_prepare', 10, 5 );
+
+function my_swiftcsv_export_batch_prepare( $post_ids, $posts, $headers, $config, $context ) {
+    // Example: prime a custom lookup table for the whole batch.
+    my_prime_external_cache( $post_ids );
+}
+```
+
 ---
 
 ## Import Hooks
@@ -474,6 +507,43 @@ function my_swiftcsv_process_custom_fields( $meta_fields, $post_id, $args ) {
 }
 ```
 
+#### `fe_csv_import_export_filter_sample_posts`
+
+Filter the sample post IDs used for import field detection.
+
+**Type:** filter
+
+**Signature:**
+
+```php
+apply_filters( 'fe_csv_import_export_filter_sample_posts', array $post_ids, array $args ): array
+```
+
+**Parameters:**
+
+- `$post_ids` (`array<int>`) Sample post IDs (empty by default).
+- `$args` (`array`) Context.
+    - `post_type` (`string`)
+    - `context` (`string`) Currently `import_field_detection`
+
+#### `fe_csv_import_export_allow_protected_meta_import`
+
+Allow importing meta keys that start with an underscore (protected meta). Disabled by default.
+
+**Type:** filter
+
+**Signature:**
+
+```php
+apply_filters( 'fe_csv_import_export_allow_protected_meta_import', bool $allow ): bool
+```
+
+**Parameters:**
+
+- `$allow` (`bool`) Default `false`.
+
+**⚠️ Security Note:** Protected meta includes plugin internals (e.g. `_edit_lock`, ACF field keys). Only enable this for trusted migrations.
+
 #### `fe_csv_import_export_import_phase_map_prepared`
 
 Action fired after field mapping is prepared.
@@ -532,6 +602,204 @@ function my_swiftcsv_optimize_batch_size( $batch_size, $total_rows, $config ) {
     return $batch_size;
 }
 ```
+
+#### `fe_csv_import_export_import_max_batch_size`
+
+Filter the hard upper bound applied to the import batch size.
+
+**Type:** filter
+
+**Signature:**
+
+```php
+apply_filters( 'fe_csv_import_export_import_max_batch_size', int $max_batch_size, int $total_rows, array $config ): int
+```
+
+**Parameters:**
+
+- `$max_batch_size` (`int`) Maximum batch size cap (default 500).
+- `$total_rows` (`int`) Total rows to process.
+- `$config` (`array`) Import configuration.
+
+#### `fe_csv_import_export_import_batch_completed`
+
+Action fired after each import batch is persisted.
+
+**Type:** action — **since 1.1.0**
+
+**Signature:**
+
+```php
+do_action( 'fe_csv_import_export_import_batch_completed', array $post_ids, array $context ): void
+```
+
+**Parameters:**
+
+- `$post_ids` (`array<int, int>`) Post IDs persisted in this batch.
+- `$context` (`array`) Batch context.
+    - `post_type` (`string`)
+    - `import_session` (`string`)
+    - `start_row` (`int`)
+    - `dry_run` (`bool`)
+    - `batch_size` (`int`)
+
+Import writes posts via direct queries, so `save_post` never fires for imported rows. Integrations that react to post changes (e.g. search indexers) should hook here instead.
+
+**Example:** (reindex imported posts)
+
+```php
+add_action( 'fe_csv_import_export_import_batch_completed', 'my_swiftcsv_reindex_batch', 10, 2 );
+
+function my_swiftcsv_reindex_batch( $post_ids, $context ) {
+    if ( ! empty( $context['dry_run'] ) ) {
+        return;
+    }
+    my_search_indexer_update( $post_ids );
+}
+```
+
+### Scheduled execution seams
+
+These extension points (all **since 1.1.0**) let FE CSV Import & Export Pro run one-time scheduled imports and exports. They are primarily consumed by the Pro plugin rather than by site code.
+
+#### `fe_csv_import_export_response_handler`
+
+Filter the handler invoked before a JSON response is sent. Returning a callable replaces the default `wp_send_json()` flow.
+
+**Type:** filter
+
+**Signature:**
+
+```php
+apply_filters( 'fe_csv_import_export_response_handler', callable|null $handler, array $payload ): callable|null
+```
+
+**Parameters:**
+
+- `$handler` (`callable|null`) Response handler callable or `null`.
+- `$payload` (`array`) JSON payload about to be sent.
+
+The Pro scheduled job runner installs a callable that captures engine responses (via a thrown exception) inside a single PHP process, where `wp_send_json()`/`wp_die()` must not run.
+
+#### `fe_csv_import_export_import_file_path`
+
+Filter to inject a pre-staged import file path, skipping the upload flow and nonce verification.
+
+**Type:** filter
+
+**Signature:**
+
+```php
+apply_filters( 'fe_csv_import_export_import_file_path', string $file_path ): string
+```
+
+**Parameters:**
+
+- `$file_path` (`string`) Pre-staged file path (empty by default). Returning a non-empty readable path bypasses nonce verification and file upload.
+
+The Pro scheduled import runner returns the job's staged CSV path here.
+
+**⚠️ Security Note:** Only return a path from trusted, server-side code. This filter bypasses upload-time nonce verification by design.
+
+#### `fe_csv_import_export_import_csv_store_ttl`
+
+Filter the TTL of the transient that stores parsed CSV metadata between import batches.
+
+**Type:** filter
+
+**Signature:**
+
+```php
+apply_filters( 'fe_csv_import_export_import_csv_store_ttl', int $ttl ): int
+```
+
+**Parameters:**
+
+- `$ttl` (`int`) Transient TTL in seconds (default `3600`).
+
+The Pro scheduled import runner increases this so long-running background jobs do not lose their stream offsets.
+
+### Dry Run preview and temporary files
+
+#### `fe_csv_import_export_dry_run_log_limit`
+
+Filter the maximum number of per-row log entries kept during a dry run.
+
+**Type:** filter
+
+**Signature:**
+
+```php
+apply_filters( 'fe_csv_import_export_dry_run_log_limit', int $limit ): int
+```
+
+**Parameters:**
+
+- `$limit` (`int`) Default `50`.
+
+#### `fe_csv_import_export_dry_run_diff_row_limit`
+
+Filter the maximum number of diff rows rendered in the admin Diff preview.
+
+**Type:** filter — **since 1.1.0**
+
+**Signature:**
+
+```php
+apply_filters( 'fe_csv_import_export_dry_run_diff_row_limit', int $limit ): int
+```
+
+**Parameters:**
+
+- `$limit` (`int`) Default `100`. Affects preview display only; the stored diff data always covers every row.
+
+#### `fe_csv_import_export_dry_run_diff_value_max_length`
+
+Filter the maximum length of before/after values stored in the dry run diff.
+
+**Type:** filter — **since 1.1.0**
+
+**Signature:**
+
+```php
+apply_filters( 'fe_csv_import_export_dry_run_diff_value_max_length', int $max_chars ): int
+```
+
+**Parameters:**
+
+- `$max_chars` (`int`) Default `500` characters. Longer values are truncated in the diff output.
+
+#### `fe_csv_import_export_dry_run_diff_ttl`
+
+Filter the lifetime of dry run diff JSONL files.
+
+**Type:** filter — **since 1.1.0**
+
+**Signature:**
+
+```php
+apply_filters( 'fe_csv_import_export_dry_run_diff_ttl', int $ttl ): int
+```
+
+**Parameters:**
+
+- `$ttl` (`int`) Seconds a diff file is kept. Default `7 * DAY_IN_SECONDS`.
+
+#### `fe_csv_import_export_import_temp_ttl`
+
+Filter the lifetime of uploaded import CSV temp files.
+
+**Type:** filter — **since 1.1.0**
+
+**Signature:**
+
+```php
+apply_filters( 'fe_csv_import_export_import_temp_ttl', int $ttl ): int
+```
+
+**Parameters:**
+
+- `$ttl` (`int`) Seconds an upload is kept. Default `30 * DAY_IN_SECONDS`. Only files left behind by abandoned import sessions reach this age; completed imports delete the upload on their final batch.
 
 ### Logging and diagnostics
 
@@ -855,6 +1123,51 @@ Action fired when rendering tab content.
 ```php
 do_action( 'fe_csv_import_export_settings_tabs_content', string $tab, array $import_results ): void
 ```
+
+#### `fe_csv_import_export_after_import_settings_fields` / `fe_csv_import_export_after_export_settings_fields` / `fe_csv_import_export_after_advanced_settings_fields` / `fe_csv_import_export_after_license_settings_fields`
+
+Actions fired inside each settings panel, letting extensions append their own fields.
+
+**Type:** action
+
+**Signatures:**
+
+```php
+do_action( 'fe_csv_import_export_after_import_settings_fields', object $admin ): void
+do_action( 'fe_csv_import_export_after_export_settings_fields', object $admin ): void
+do_action( 'fe_csv_import_export_after_advanced_settings_fields', object $admin ): void
+do_action( 'fe_csv_import_export_after_license_settings_fields', object $admin ): void
+```
+
+**Parameters:**
+
+- `$admin` (`object`) The admin instance (`FE_CSV_Import_Export_Admin`).
+
+#### `fe_csv_import_export_after_export_button`
+
+Action fired right after the export submit button, inside the export settings panel.
+
+**Type:** action
+
+**Signature:**
+
+```php
+do_action( 'fe_csv_import_export_after_export_button' ): void
+```
+
+#### `fe_csv_import_export_after_import_log_panels`
+
+Action fired after the import log panels, where extra result panels can be rendered.
+
+**Type:** action — **since 1.1.0**
+
+**Signature:**
+
+```php
+do_action( 'fe_csv_import_export_after_import_log_panels' ): void
+```
+
+It fires immediately after the built-in **Diff** panel, so extensions can append additional result panels alongside it.
 
 #### `fe_csv_import_export_export_form_action`
 

@@ -137,7 +137,7 @@ abstract class FE_CSV_Import_Export_Import_Base {
 			 * The Pro version's scheduled import runner increases this value so
 			 * that long-running background jobs do not lose their stream offsets.
 			 *
-			 * @since 1.0.4
+			 * @since 1.1.0
 			 * @param int $ttl Transient TTL in seconds (default 3600).
 			 */
 			(int) apply_filters( 'fe_csv_import_export_import_csv_store_ttl', 3600 )

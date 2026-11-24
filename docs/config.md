@@ -25,6 +25,15 @@ This page describes the current behavior of FE CSV Import & Export as implemente
 - Use `>` to specify term hierarchy (spaces before/after `>` do not affect functionality)
 - Taxonomy output can be selected as term_id or name
 
+### Dry Run and Diff Preview
+
+- A dry run validates the CSV without writing posts and generates a per-field diff shown on the **Diff** tab.
+- The diff compares post fields, taxonomy terms, and `cf_` custom fields for every row.
+- Preview row limit: `fe_csv_import_export_dry_run_diff_row_limit` (default 100)
+- Diff data lifetime: `fe_csv_import_export_dry_run_diff_ttl` (default 7 days)
+- Value truncation in diffs: `fe_csv_import_export_dry_run_diff_value_max_length` (default 500 chars)
+- Abandoned uploaded CSVs: `fe_csv_import_export_import_temp_ttl` (default 30 days)
+
 ## Export Configuration
 
 ### Export Options

@@ -1027,7 +1027,7 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 	 * Unchanged term sets produce no diff entry, matching the write path where
 	 * wp_set_post_terms() would leave the assignments identical.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @param array  $diff_rows Dry run diff rows keyed by row number.
 	 * @param array  $item Prepared batch item.
 	 * @param string $taxonomy Taxonomy name.
@@ -1067,7 +1067,7 @@ class FE_CSV_Import_Export_Import_Meta_Tax {
 	 * and storage sanitization, matching the write path) against the currently
 	 * stored meta values using strict comparison.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @param array  $diff_rows Dry run diff rows keyed by row number.
 	 * @param array  $item Prepared batch item.
 	 * @param string $key Meta key.

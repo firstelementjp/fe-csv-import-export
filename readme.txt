@@ -30,7 +30,7 @@ It is designed for site owners who want a stress-free CSV workflow for daily ope
 * Option to target published status or all post statuses
 * Option to export only frequently edited "basic fields" or "all fields"
 * Option to update (overwrite) existing posts with the same ID or create new ones
-* Dry run functionality
+* Dry run functionality with a per-field before/after diff preview for every row
 * Batch processing for large CSV files
 * Real-time progress display in the admin interface
 * Option to enable/disable logging (speed priority)

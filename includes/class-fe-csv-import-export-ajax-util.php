@@ -100,7 +100,7 @@ class FE_CSV_Import_Export_Ajax_Util {
 	 * {@see self::$response_sent} flag set by the first batch would suppress
 	 * error responses in subsequent batches.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @return void
 	 */
 	public static function reset_response_state(): void {
@@ -293,7 +293,7 @@ class FE_CSV_Import_Export_Ajax_Util {
 	 * through wp_send_json()/wp_die(). The handler is invoked before output
 	 * buffer cleanup so buffers owned by the caller are never destroyed.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @param array $payload JSON payload about to be sent.
 	 * @return bool True when a handler consumed the payload and the caller
 	 *              should not send a response.
@@ -306,7 +306,7 @@ class FE_CSV_Import_Export_Ajax_Util {
 		 * callable receives the payload array. The Pro scheduled job runner
 		 * uses this to capture engine responses inside a single PHP process.
 		 *
-		 * @since 1.0.4
+		 * @since 1.1.0
 		 * @param callable|null $handler Response handler callable or null.
 		 * @param array         $payload JSON payload about to be sent.
 		 */

@@ -136,6 +136,12 @@ This helps keep responsibilities clear between:
 - Deciding behavior
 - Writing data
 
+### 6. Dry Run and Diff Preview
+
+An import can also run in *dry run* mode, which processes rows through the same pipeline without persisting posts. In dry run mode the batch processor records a per-field before/after diff (post fields, taxonomy terms, and `cf_` custom fields) via `FE_CSV_Import_Export_Import_Dry_Run_Diff`, stored as JSONL temp data and rendered on the **Diff** tab of the import log area.
+
+Diff files and abandoned upload CSVs are swept on a TTL basis (`fe_csv_import_export_dry_run_diff_ttl`, `fe_csv_import_export_import_temp_ttl`), and uninstall removes leftover temp data. The Pro version reads the same stored diff for its full-diff CSV download.
+
 ## Batch Processing Model
 
 Both import and export use chunked AJAX processing.
@@ -179,6 +185,13 @@ This hook-driven approach also supports Free and Pro interoperability.
 The Free version provides the base flow and extension points.
 
 The Pro version extends behavior through hooks and compatible implementations instead of rewriting the entire system.
+
+Since 1.1.0, Free also exposes dedicated seams used by the Pro scheduled-job runner:
+
+- `fe_csv_import_export_response_handler` lets Pro capture engine responses inside one PHP process instead of `wp_send_json()`
+- `fe_csv_import_export_import_file_path` injects a pre-staged CSV path, bypassing the upload flow
+- `fe_csv_import_export_import_csv_store_ttl` extends parsed-CSV metadata lifetime for long-running jobs
+- `fe_csv_import_export_import_batch_completed` notifies per-batch completion (the direct-query import path never fires `save_post`)
 
 This makes it easier to:
 

@@ -96,7 +96,7 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 	 * Collected from successful non-dry-run rows and passed to the
 	 * 'fe_csv_import_export_import_batch_completed' action.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @var array<int, int>
 	 */
 	private $batch_persisted_post_ids = [];
@@ -422,7 +422,7 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 		 * for imported rows. Integrations that react to post changes (e.g.
 		 * search indexers) should hook here instead.
 		 *
-		 * @since 1.0.4
+		 * @since 1.1.0
 		 * @param array<int, int> $post_ids Post IDs persisted in this batch.
 		 * @param array           $context  Batch context (post_type, import_session, start_row, dry_run, batch_size).
 		 */
@@ -662,7 +662,7 @@ class FE_CSV_Import_Export_Import_Batch_Processor extends FE_CSV_Import_Export_I
 	 * For new rows, provided post fields are recorded with no previous value.
 	 * Meta and taxonomy diffs are merged later during the batch apply phase.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @param int    $row_number CSV row number.
 	 * @param int    $post_id Target post ID (0 for new posts during dry run).
 	 * @param bool   $is_update Whether this row updates an existing post.

@@ -25,6 +25,15 @@
 - タームの階層の指定が必要な場合は `>` を使用します（ `>` の前後の半角スペースの有無は機能に影響しません）
 - タクソノミーは、term_id または name どちらで出力するか選択できます
 
+### Dry Run と差分プレビュー
+
+- ドライランは投稿を書き込まずに CSV を検証し、**Diff** タブに表示されるフィールド単位の差分を生成します。
+- 差分は全行について投稿フィールド・タクソノミー・`cf_` カスタムフィールドを比較します。
+- プレビュー行数の上限： `fe_csv_import_export_dry_run_diff_row_limit`（デフォルト 100）
+- 差分データの保持期間： `fe_csv_import_export_dry_run_diff_ttl`（デフォルト 7日）
+- 差分内の値の切り詰め： `fe_csv_import_export_dry_run_diff_value_max_length`（デフォルト 500文字）
+- 放棄されたアップロード CSV の保持期間： `fe_csv_import_export_import_temp_ttl`（デフォルト 30日）
+
 ## エクスポート設定
 
 ### エクスポートオプション

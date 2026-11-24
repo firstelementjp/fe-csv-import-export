@@ -30,6 +30,14 @@ After activation, open:
 5. Run a dry run first if you want to validate the file safely
 6. Start the import and wait for completion
 
+### Dry Run and the Diff Preview
+
+A dry run processes the CSV without writing any posts and produces a **Diff** preview. Open the **Diff** tab in the import log area to see a per-field before/after comparison for every row — post fields, taxonomy terms, and `cf_` custom fields — so you can verify exactly what will change before applying the import.
+
+- Rows are grouped as *rows with changes*, *rows without changes*, and *new rows*.
+- The preview lists up to 100 rows by default (see `fe_csv_import_export_dry_run_diff_row_limit` in the [Hooks](hooks.md) reference); the stored diff always covers every row.
+- With the Pro version, the complete diff is also downloadable as a CSV file.
+
 ### Minimum Test CSV
 
 ```csv
