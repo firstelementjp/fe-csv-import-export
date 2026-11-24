@@ -24,7 +24,7 @@ if ( ! defined( 'FE_CSV_IMPORT_EXPORT_PLUGIN_DIR' ) ) {
  * Temp files are runtime artifacts rather than user data, so they are
  * removed regardless of the "remove all data" preference.
  *
- * @since 1.0.4
+ * @since 1.1.0
  * @return void
  */
 function fe_csv_import_export_remove_temp_directory() {

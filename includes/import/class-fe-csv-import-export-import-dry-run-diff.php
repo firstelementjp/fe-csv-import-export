@@ -2,7 +2,7 @@
 /**
  * Dry run diff computation and persistence for FE CSV Import & Export.
  *
- * @since 1.0.4
+ * @since 1.1.0
  * @package FE_CSV_Import_Export
  */
 
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * - Post fields keep their CSV header names, meta fields use the `cf_` prefix
  *   and taxonomies use the `tax_` prefix, matching the CSV column convention.
  *
- * @since 1.0.4
+ * @since 1.1.0
  * @package FE_CSV_Import_Export
  */
 class FE_CSV_Import_Export_Import_Dry_Run_Diff {
@@ -29,7 +29,7 @@ class FE_CSV_Import_Export_Import_Dry_Run_Diff {
 	/**
 	 * Post fields that are always rewritten on update and excluded from diffs.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @var array<int, string>
 	 */
 	private const POST_DIFF_IGNORED_FIELDS = [ 'post_modified', 'post_modified_gmt', 'ID' ];
@@ -40,7 +40,7 @@ class FE_CSV_Import_Export_Import_Dry_Run_Diff {
 	 * Compares the post data that would be written against the currently stored
 	 * post row using strict string comparison.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @param int   $post_id Target post ID.
 	 * @param array $post_data Post data that would be written (wp_posts columns).
 	 * @return array<string, array{old: ?string, new: ?string}> Changed fields keyed by column name.
@@ -78,7 +78,7 @@ class FE_CSV_Import_Export_Import_Dry_Run_Diff {
 	/**
 	 * Fetch existing meta values for all (post_id, meta_key) pairs in a batch.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @param wpdb  $wpdb WordPress database handler.
 	 * @param array $items Prepared batch items.
 	 * @return array<int, array<string, array<int, string>>> Meta values keyed by post ID then meta key, ordered by meta_id.
@@ -149,7 +149,7 @@ class FE_CSV_Import_Export_Import_Dry_Run_Diff {
 	 * unserialized form produced by maybe_unserialize()) does not produce a
 	 * false positive. Plain strings are compared as-is.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @param string $value Meta value.
 	 * @return string Canonical form for comparison.
 	 */
@@ -172,7 +172,7 @@ class FE_CSV_Import_Export_Import_Dry_Run_Diff {
 	 * Both lists are compared element-wise in storage order after
 	 * canonicalization.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @param array<int, string> $old_values Currently stored values.
 	 * @param array<int, string> $new_values Values that would be written.
 	 * @return bool True when the lists differ.
@@ -197,7 +197,7 @@ class FE_CSV_Import_Export_Import_Dry_Run_Diff {
 	/**
 	 * Format a value list for diff display.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @param array<int, string>|string|null $values Value list, single value, or null for "no previous value".
 	 * @return string|null Display string (null preserves the "new value" marker).
 	 */
@@ -228,7 +228,7 @@ class FE_CSV_Import_Export_Import_Dry_Run_Diff {
 	/**
 	 * Resolve term names for a list of term IDs.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @param string          $taxonomy Taxonomy name.
 	 * @param array<int, int> $term_ids Term IDs.
 	 * @return array<int, string> Term names in the same order as the given IDs.
@@ -250,7 +250,7 @@ class FE_CSV_Import_Export_Import_Dry_Run_Diff {
 	/**
 	 * Build a per-batch diff summary from diff row entries.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @param array $rows Diff rows keyed by row number.
 	 * @return array{changed: int, unchanged: int, created: int, fields: array<string, int>} Summary counters.
 	 */
@@ -293,7 +293,7 @@ class FE_CSV_Import_Export_Import_Dry_Run_Diff {
 	/**
 	 * Get the diff log file path for an import session.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @param string $import_session Import session identifier.
 	 * @return string Absolute file path inside the protected temp directory.
 	 */
@@ -308,7 +308,7 @@ class FE_CSV_Import_Export_Import_Dry_Run_Diff {
 	 * The file accumulates the full diff across batches so it can be downloaded
 	 * after the Dry Run completes (used by the Pro CSV download feature).
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @param string $import_session Import session identifier.
 	 * @param array  $rows Diff rows for the current batch.
 	 * @return void

@@ -173,7 +173,7 @@ class FE_CSV_Import_Export_File_Util {
 	/**
 	 * Cron hook name for the periodic temp file cleanup.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @var string
 	 */
 	public const CRON_HOOK_TEMP_CLEANUP = 'fe_csv_import_export_temp_cleanup';
@@ -181,7 +181,7 @@ class FE_CSV_Import_Export_File_Util {
 	/**
 	 * Register wp-cron hook for temp file cleanup.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @return void
 	 */
 	public static function register_temp_cleanup_cron(): void {
@@ -191,7 +191,7 @@ class FE_CSV_Import_Export_File_Util {
 	/**
 	 * Schedule daily temp cleanup if not already scheduled.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @return void
 	 */
 	public static function maybe_schedule_temp_cleanup(): void {
@@ -204,7 +204,7 @@ class FE_CSV_Import_Export_File_Util {
 	/**
 	 * Clear scheduled temp cleanup.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @return void
 	 */
 	public static function clear_temp_cleanup_schedule(): void {
@@ -217,7 +217,7 @@ class FE_CSV_Import_Export_File_Util {
 	 * Resolves the temp directory without creating it, so a site that never
 	 * imported does not gain an empty directory from the daily sweep.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @return void
 	 */
 	public static function cron_cleanup_expired_temp_files(): void {
@@ -240,7 +240,7 @@ class FE_CSV_Import_Export_File_Util {
 	 *   files left behind by abandoned import sessions, so it deliberately
 	 *   stays generous to keep paused imports resumable.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @param string $temp_dir Temporary directory path.
 	 * @return int Number of deleted files.
 	 */
@@ -252,7 +252,7 @@ class FE_CSV_Import_Export_File_Util {
 		/**
 		 * Filters the lifetime of dry run diff JSONL files in seconds.
 		 *
-		 * @since 1.0.4
+		 * @since 1.1.0
 		 * @param int $ttl Seconds a diff file is kept. Default 7 days.
 		 */
 		$diff_ttl = (int) apply_filters( 'fe_csv_import_export_dry_run_diff_ttl', 7 * DAY_IN_SECONDS );
@@ -263,7 +263,7 @@ class FE_CSV_Import_Export_File_Util {
 		 * Only files left behind by abandoned import sessions reach this age;
 		 * completed imports delete the upload on their final batch.
 		 *
-		 * @since 1.0.4
+		 * @since 1.1.0
 		 * @param int $ttl Seconds an upload is kept. Default 30 days.
 		 */
 		$import_ttl = (int) apply_filters( 'fe_csv_import_export_import_temp_ttl', 30 * DAY_IN_SECONDS );
@@ -277,7 +277,7 @@ class FE_CSV_Import_Export_File_Util {
 	/**
 	 * Delete files matching a glob pattern that are older than a TTL.
 	 *
-	 * @since 1.0.4
+	 * @since 1.1.0
 	 * @param string $pattern Glob pattern matching the files to sweep.
 	 * @param int    $ttl     Maximum file age in seconds.
 	 * @return int Number of deleted files.

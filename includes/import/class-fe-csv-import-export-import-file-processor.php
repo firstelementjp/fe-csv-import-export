@@ -52,7 +52,7 @@ class FE_CSV_Import_Export_Import_File_Processor {
 		 * already been uploaded and stored in a job-specific directory. Returning a
 		 * non-empty readable path bypasses nonce verification and file upload.
 		 *
-		 * @since 1.0.4
+		 * @since 1.1.0
 		 * @param string $file_path Pre-staged file path (empty by default).
 		 */
 		$injected_path = apply_filters( 'fe_csv_import_export_import_file_path', '' );
