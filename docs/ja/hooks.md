@@ -558,7 +558,7 @@ apply_filters('fe_csv_import_export_filter_sample_posts', array $post_ids, array
 
 #### `fe_csv_import_export_allow_protected_meta_import`
 
-アンダースコアで始まるメタキー（保護メタ）のインポートを許可します。デフォルトでは無効です。
+`unfiltered_html` 権限を**持たない**ユーザーが、アンダースコアで始まるメタキー（保護メタ）をインポートできるようにします。デフォルトでは無効です。
 
 **タイプ:** filter
 
@@ -571,6 +571,8 @@ apply_filters('fe_csv_import_export_allow_protected_meta_import', bool $allow): 
 **パラメータ:**
 
 - `$allow` (`bool`) デフォルト `false`
+
+この制限は `unfiltered_html` を持たない実行者（マルチサイトの管理者、`DISALLOW_UNFILTERED_HTML` が定義された環境、`user_can_import` 系フィルターで権限を広げた場合など）にのみ適用されます。その場合、`_` 始まりのメタキーはドロップされ、残りの値にも `wp_kses_post()` が適用されます。`unfiltered_html` を持つユーザー（通常のシングルサイト管理者）は、このフィルターなしで保護メタをそのままインポートできます。
 
 **⚠️ セキュリティ注意:** 保護メタにはプラグイン内部値（`_edit_lock`、ACFのフィールドキーなど）が含まれます。信頼できる移行用途に限定してください。
 

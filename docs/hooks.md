@@ -528,7 +528,7 @@ apply_filters( 'fe_csv_import_export_filter_sample_posts', array $post_ids, arra
 
 #### `fe_csv_import_export_allow_protected_meta_import`
 
-Allow importing meta keys that start with an underscore (protected meta). Disabled by default.
+Allow users **without** the `unfiltered_html` capability to import meta keys that start with an underscore (protected meta). Disabled by default.
 
 **Type:** filter
 
@@ -541,6 +541,8 @@ apply_filters( 'fe_csv_import_export_allow_protected_meta_import', bool $allow )
 **Parameters:**
 
 - `$allow` (`bool`) Default `false`.
+
+This gate only applies to importers lacking `unfiltered_html` (e.g. multisite admins, `DISALLOW_UNFILTERED_HTML` installs, or widened `user_can_import` rules). For those users, `_`-prefixed meta keys are dropped and remaining values are sanitized with `wp_kses_post()`. Users who have `unfiltered_html` — typical single-site administrators — already import protected meta without this filter.
 
 **⚠️ Security Note:** Protected meta includes plugin internals (e.g. `_edit_lock`, ACF field keys). Only enable this for trusted migrations.
 
