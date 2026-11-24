@@ -46,6 +46,7 @@ For the import format, note that the `ID` column is required. Use an empty value
 - [Installation](install.md) - Detailed installation instructions
 - [Configuration](config.md) - Configuration options and settings
 - [Examples](example.md) - Implementation examples and use cases
+- [Pro Version Features](pro.md) - Pro feature list and usage instructions
 - [Troubleshooting](help.md) - Common issues and solutions
 - [Developer Hooks](hooks.md) - Developer reference and customization
 - [Contributing](contribute.md) - Development guidelines

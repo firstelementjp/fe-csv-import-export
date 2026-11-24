@@ -46,6 +46,7 @@ FE CSV Import & Export は、管理画面から投稿データを CSV 形式で�
 - [インストール](ja/install.md) - 詳細なインストール手順
 - [設定](ja/config.md) - 設定オプションと構成
 - [例](ja/example.md) - 実装例と使用例
+- [Pro 版機能](ja/pro.md) - Pro 版の機能一覧と使い方
 - [トラブルシューティング](ja/help.md) - 一般的な問題と解決策
 - [開発者向けフック](ja/hooks.md) - 開発者向けリファレンスとカスタマイズ
 - [貢献](ja/contribute.md) - 開発ガイドライン

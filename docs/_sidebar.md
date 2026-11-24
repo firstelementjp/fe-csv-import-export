@@ -7,6 +7,7 @@
 ### Usage
 
 - [💡 Examples](example.md)
+- [⭐ Pro Version](pro.md)
 - [🐛 Troubleshooting](help.md)
 
 ### Development

@@ -36,7 +36,7 @@ A dry run processes the CSV without writing any posts and produces a **Diff** pr
 
 - Rows are grouped as *rows with changes*, *rows without changes*, and *new rows*.
 - The preview lists up to 100 rows by default (see `fe_csv_import_export_dry_run_diff_row_limit` in the [Hooks](hooks.md) reference); the stored diff always covers every row.
-- With the Pro version, the complete diff is also downloadable as a CSV file.
+- With the Pro version, the complete diff is also downloadable as a CSV file (see [Pro Version Features](pro.md)).
 
 ### Minimum Test CSV
 

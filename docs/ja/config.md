@@ -57,9 +57,10 @@ FE CSV Import & Export はサーバーの環境設定値（max_execution_time, m
 
 ### インポート
 
-- インポートのバッチサイズは自動的に計算されます
-- 現在の実装では環境制限に応じてバッチあたり約 **10-50 行** を目標とします
-- 近日中にエクスポートと同様の効率化により、インポート時間の短縮を図ります
+- インポートのバッチサイズは `max_execution_time` と `memory_limit` から自動的に計算されます
+- 現在の実装では環境制限に応じてバッチあたり **10-500 行** を使用します
+- 上限は `fe_csv_import_export_import_max_batch_size` フィルター、計算結果は `fe_csv_import_export_import_batch_size` フィルターでカスタマイズ可能です
+- メタとタクソノミーの書き込みはバッチ化されており、タームに変更がない行では `wp_set_post_terms()` をスキップします
 
 ### エクスポート
 
@@ -84,10 +85,9 @@ FE CSV Import & Export はサーバーの環境設定値（max_execution_time, m
 
 ## ライセンスと Pro 統合
 
-Free版とPro版は連携して動作します。Pro版がインストールされている場合、以下の機能が利用可能になります：
+Free版とPro版は連携して動作します。Pro版がインストールされライセンスが有効化されると、ライセンスキーの有効化・無効化 UI と Pro 版限定機能が利用可能になります。
 
-- ライセンスキーの有効化・無効化 UI
-- Pro版限定機能の利用（Advanced Custom Fields対応・UpdraftPlus連携・実行パスワードの設定　他）
+各 Pro 機能の詳細と使い方は [Pro 版機能](ja/pro.md) を参照してください。
 
 ## 現在の実用上の制限
 

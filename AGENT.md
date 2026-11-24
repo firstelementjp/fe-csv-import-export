@@ -191,6 +191,10 @@ Use local time, not UTC.
 - `README.md` — Project overview and setup instructions
 - `phpcs.xml.dist` — PHP CodeSniffer configuration
 
+## Documentation Maintenance
+
+- `docs/pro.md` and `docs/ja/pro.md` document Pro version features, but the Pro code lives in the separate `fe-csv-import-export-pro` repository. When the Pro plugin ships a new feature, update both pages here so the docs stay in sync.
+
 ## GitHub Actions Workflows
 
 - **release-zip.yml**: Release ZIP creation and GitHub Release (tags), plus optional announcement posts and WordPress.org SVN deploy

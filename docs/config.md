@@ -57,9 +57,10 @@ FE CSV Import & Export automatically adjusts batch sizes.
 
 ### Import
 
-- Import batches are calculated automatically
-- Current implementation targets roughly **10-50 rows** per batch depending on environment limits
-- Import time will be shortened through efficiency improvements similar to export in the near future
+- Import batches are calculated automatically from `max_execution_time` and `memory_limit`
+- Current implementation uses **10-500 rows** per batch depending on environment limits
+- The upper limit can be customized with the `fe_csv_import_export_import_max_batch_size` filter, and the calculated size with `fe_csv_import_export_import_batch_size`
+- Meta and taxonomy writes are batched, and `wp_set_post_terms()` is skipped for rows whose terms are unchanged
 
 ### Export
 
@@ -84,10 +85,9 @@ During import and export, the admin UI provides:
 
 ## License and Pro Integration
 
-The Free and Pro versions work together. When the Pro version is installed, the following features become available:
+The Free and Pro versions work together. When the Pro version is installed and the license is activated, a license key activation/deactivation UI and Pro-only features become available.
 
-- License key activation and deactivation UI
-- Access to Pro-only features (Advanced Custom Fields integration, UpdraftPlus integration, execution password settings, etc.)
+See [Pro Version Features](pro.md) for the full feature list and usage instructions.
 
 ## Current Practical Limits
 

@@ -7,6 +7,7 @@
 ### 使用方法
 
 - [💡 例](ja/example.md)
+- [⭐ Pro 版機能](ja/pro.md)
 - [🐛 トラブルシューティング](ja/help.md)
 
 ### 開発
