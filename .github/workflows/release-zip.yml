@@ -5,6 +5,7 @@ on:
         tags: ['v*']
     release:
         types: [published]
+    workflow_dispatch:
 
 permissions:
     contents: read
@@ -43,8 +44,11 @@ jobs:
               run: |
                   rm -rf release
                   mkdir -p release
+
+                  # Get version from tag or plugin header
                   if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
                       ZIP_VERSION="${GITHUB_REF_NAME#v}"
+                      ZIP_VERSION="${ZIP_VERSION#.}"
                   else
                       ZIP_VERSION=$(grep -m1 'Version:' fe-csv-import-export.php | awk '{print $NF}')
                   fi
@@ -66,6 +70,7 @@ jobs:
                   zip -r ../${ZIP_FILE} fe-csv-import-export
 
                   echo "zip_file=${ZIP_FILE}" >> "$GITHUB_OUTPUT"
+                  echo "zip_version=${ZIP_VERSION}" >> "$GITHUB_OUTPUT"
 
             - name: Security checks on release tree
               run: |
@@ -89,6 +94,7 @@ jobs:
                   fi
 
             - name: Create Release
+              if: startsWith(github.ref, 'refs/tags/')
               uses: softprops/action-gh-release@v3
               with:
                   files: ${{ steps.create_zip.outputs.zip_file }}
@@ -102,8 +108,9 @@ jobs:
         # GitHub-hosted runners run in Azure US regions.
         runs-on: [self-hosted, macOS]
         needs: create-zip
+        # Tag pushes only (workflow_dispatch builds are not releases).
         # Announcement integrations are opt-in via repository variables/secrets.
-        if: github.repository == 'firstelementjp/fe-csv-import-export' && (vars.WP_BASE_URL != '' || vars.ENABLE_X_POST == 'true')
+        if: github.repository == 'firstelementjp/fe-csv-import-export' && startsWith(github.ref, 'refs/tags/') && (vars.WP_BASE_URL != '' || vars.ENABLE_X_POST == 'true')
         env:
             PLUGIN_NAME: FE CSV Import & Export
             WP_BASE_URL: ${{ vars.WP_BASE_URL }}
