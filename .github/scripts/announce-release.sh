@@ -80,7 +80,7 @@ if [ -f "docs/ja/changes.md" ]; then
         if [ -f "${ANNOUNCE_DIR}/${GITHUB_REF_NAME}.ja.txt" ]; then
             JA_TITLE="${JA_TITLE}｜$(head -n 1 "${ANNOUNCE_DIR}/${GITHUB_REF_NAME}.ja.txt")"
         fi
-        JA_CONTENT="<p>${PLUGIN_NAME} ${VERSION} をリリースしました。主な変更点は以下の通りです。</p>${JA_NOTES_HTML}<p>ダウンロード: <a href=\"${RELEASE_URL}\">GitHub Releases</a></p>"
+        JA_CONTENT="<p>${PLUGIN_NAME} ${VERSION} をリリースしました。主な変更点は以下の通りです。</p>${JA_NOTES_HTML}<p>製品情報: <a href=\"https://www.firstelement.co.jp/products/fe-csv-import-export-plugin/\">FE CSV Import &amp; Export – シンプル＆直感的なCSV管理プラグイン for WordPress</a></p>"
         JA_POST_ID="$(create_draft "${JA_TITLE}" "${JA_CONTENT}" "ja" "null" "${WP_JA_CATEGORY_ID:-}" | jq -r '.id // empty')"
         echo "Japanese draft created: id=${JA_POST_ID:-unknown}"
     else
@@ -101,7 +101,7 @@ EN_TITLE_FILE="${ANNOUNCE_DIR}/${GITHUB_REF_NAME}.en.txt"
 if [ -f "${EN_TITLE_FILE}" ]; then
     EN_TITLE="${EN_TITLE} | $(head -n 1 "${EN_TITLE_FILE}")"
 fi
-EN_CONTENT="<p>${PLUGIN_NAME} ${VERSION} is now available. Highlights:</p>${EN_NOTES_HTML}<p>Download: <a href=\"${RELEASE_URL}\">GitHub Releases</a></p>"
+EN_CONTENT="<p>${PLUGIN_NAME} ${VERSION} is now available. Highlights:</p>${EN_NOTES_HTML}<p>Product Information: <a href=\"https://www.firstelement.co.jp/en/products/fe-csv-import-export-plugin/\">FE CSV Import &amp; Export – Simple yet powerful CSV management plugin for WordPress</a></p>"
 
 TRANSLATIONS="null"
 if [ -n "${JA_POST_ID}" ]; then
