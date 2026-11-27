@@ -175,3 +175,37 @@ const postType = document.querySelector('#ajax_import_post_type')?.value || 'pos
 ```
 
 **Lesson**: Always verify HTML/JavaScript naming convention consistency. Use debug logging to confirm actual sent values. Test with custom post types, not just default 'post'.
+
+---
+
+## #014 "No file selected" After Drag & Drop or Completed Import (2026-11-27)
+
+**Symptom**: Import fails with `noFileSelected` even though the UI shows a selected file. Typically reported as "Dry Run failed, but the real import worked after re-picking the file."
+
+**Cause**: Two separate issues in `assets/js/fe-csv-import-export-import.js`:
+
+1. The drop handler called `handleFileSelect(files[0])` (UI update only) but never assigned `fileInput.files`, so the `<input type="file">` stayed empty.
+2. `completeAjaxImport()` cleared `fileInput.value = ''` and hid the file info after every completed import, so a second run (e.g. Dry Run then real import) always failed unless the file was re-picked.
+
+**Fix**:
+
+```javascript
+// Drop handler — reflect the file on the input
+const files = e.dataTransfer.files;
+if (files.length > 0) {
+	try {
+		fileInput.files = files;
+		droppedFile = null;
+	} catch (error) {
+		droppedFile = files[0]; // Fallback when FileList assignment is not allowed
+	}
+	handleFileSelect(files[0]);
+}
+
+// startAjaxImport — check the file before clearing logs/progress
+const file = document.querySelector('#ajax_csv_file')?.files[0] || droppedFile;
+
+// completeAjaxImport — removed the file input reset block entirely
+```
+
+**Lesson**: Updating the "file selected" UI without populating `input.files` creates a false selected state. Verify the actual `input.files` contents in every selection path (dialog, drag & drop, remove). Do not clear the file input on import completion — the Dry Run → real import workflow requires the selection to persist.

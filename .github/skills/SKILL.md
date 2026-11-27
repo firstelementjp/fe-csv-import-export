@@ -169,6 +169,8 @@ npm run format         # Prettier
 | 011 | Release  | Admin JS 404s in installed plugin     | Source JS is export-ignored but module `.min.js` files were not copied into the ZIP | Verify every file enqueued by `admin-assets.php` exists in the ZIP; `test-release.sh` prints minified file counts |
 | 012 | Security | Uploaded CSV public in `uploads/YYYY/MM/` | `wp_handle_upload()` stored the original file publicly and only the temp copy was deleted | Move the upload directly into the protected temp dir with `move_uploaded_file()`; never route through `wp_handle_upload()` |
 | 013 | JS       | Import log shows error as `undefined`    | `wp_send_json_error( $string )` places the message under `data`, but the client read `data.error` | In AJAX error handlers, read `data.error \|\| (data.data && (data.data.message \|\| data.data))` to cover both response shapes |
+| 014 | JS       | "No file selected" despite file shown as selected | Drop handler never set `input.files`; completion cleared the input | Assign `input.files` on drop; keep the file selection after import completes |
+| 015 | PHP      | TypeError on import when CSV ID column is empty | `resolve_post_id_and_update_flag()` typed `int` while CSV values are strings | Keep CSV-derived values `string` at the boundary; cast only after emptiness checks |
 
 ## Detailed Documentation
 

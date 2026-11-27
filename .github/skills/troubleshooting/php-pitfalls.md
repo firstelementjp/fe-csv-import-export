@@ -94,3 +94,42 @@ if ( $file_path && file_exists( $file_path ) ) {
 ```
 
 **Lesson**: Always include cleanup on ALL execution paths, not just success paths.
+
+---
+
+## #015 TypeError on Import When CSV ID Column Is Empty (2026-11-27)
+
+**Symptom**: Both Dry Run and real import fail with
+`TypeError: resolve_post_id_and_update_flag(): Argument #4 ($post_id_from_csv) must be of type int, string given`
+whenever the CSV `ID` column is empty (new-post imports).
+
+**Cause**: `get_post_id_from_csv_row()` returns `string` (e.g. `''` for new rows), but
+`resolve_post_id_and_update_flag()` declared the parameter as `int`. PHP throws a
+TypeError for `''` even in coercive mode, so every create-mode row crashed.
+Numeric ID strings only appeared to work because PHP coerces them silently.
+
+**Fix** (`includes/import/class-fe-csv-import-export-import-row-context.php`):
+
+```php
+// BEFORE — crashes on '' (empty ID column)
+public function resolve_post_id_and_update_flag(
+    wpdb $wpdb,
+    string $update_existing,
+    string $post_type,
+    int $post_id_from_csv
+): array
+
+// AFTER — matches get_post_id_from_csv_row() return type
+public function resolve_post_id_and_update_flag(
+    wpdb $wpdb,
+    string $update_existing,
+    string $post_type,
+    string $post_id_from_csv
+): array
+```
+
+**Lesson**: CSV-derived values are always strings, including "empty" cells (`''`).
+Type `int` hints on values read straight from CSV rows will TypeError on empty
+cells — keep them `string` at the boundary and cast only after emptiness checks.
+This also existed since the file was introduced, so test imports with an empty
+ID column (create mode), not only numeric-ID update rows.

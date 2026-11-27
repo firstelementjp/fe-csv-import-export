@@ -79,6 +79,13 @@ function initFileUpload() {
 
 		const files = e.dataTransfer.files;
 		if (files.length > 0) {
+			// Reflect the dropped file on the input so it is sent with the request.
+			try {
+				fileInput.files = files;
+				droppedFile = null;
+			} catch (error) {
+				droppedFile = files[0];
+			}
 			handleFileSelect(files[0]);
 		}
 	});
@@ -87,6 +94,7 @@ function initFileUpload() {
 	if (removeBtn) {
 		removeBtn.addEventListener('click', () => {
 			fileInput.value = '';
+			droppedFile = null;
 			fileInfo.classList.remove('visible');
 			uploadArea.classList.remove('file-selected');
 		});
@@ -115,6 +123,7 @@ function initFileUpload() {
 
 // Global variables for import state
 let importSession = null;
+let droppedFile = null;
 let importLogPollingTimer = null;
 let importLogPollingAbortController = null;
 let importLogPollingPromise = null;
@@ -389,6 +398,14 @@ function handleFileSelect(file) {
 function startAjaxImport(importMethod) {
 	currentImportMethod = importMethod || 'wp_compatible';
 
+	// Fall back to the stored dropped file when the input cannot hold it.
+	const file = document.querySelector('#ajax_csv_file')?.files[0] || droppedFile;
+
+	if (!file) {
+		addLogEntry(feCsvImportExport.messages.noFileSelected, 'error', 'import');
+		return;
+	}
+
 	// Reset flags for new import
 	window.feCsvImportExportLogsDisplayed = false;
 	window.feCsvImportExportLogTabsInitialized = false;
@@ -420,13 +437,6 @@ function startAjaxImport(importMethod) {
 			progressBar.classList.add('processing');
 			progressBar.classList.remove('completed');
 		}
-	}
-
-	const file = document.querySelector('#ajax_csv_file')?.files[0];
-
-	if (!file) {
-		addLogEntry(feCsvImportExport.messages.noFileSelected, 'error', 'import');
-		return;
 	}
 
 	const postType = document.querySelector('#ajax_import_post_type')?.value || 'post';
@@ -943,21 +953,6 @@ function completeAjaxImport(data, importBtn, cancelBtn) {
 	}
 	if (cancelBtn) {
 		cancelBtn.style.display = 'none';
-	}
-
-	// Reset file input
-	const fileInput = document.querySelector('#ajax_csv_file');
-	const uploadArea = document.querySelector('#csv-file-upload');
-	const fileInfo = document.querySelector('#csv-file-info');
-
-	if (fileInput) {
-		fileInput.value = '';
-	}
-	if (uploadArea) {
-		uploadArea.classList.remove('file-selected');
-	}
-	if (fileInfo) {
-		fileInfo.classList.remove('visible');
 	}
 }
 

@@ -301,7 +301,7 @@ class FE_CSV_Import_Export_Import_Row_Context {
 	 * @param array  $parsed_data Parsed CSV row.
 	 * @return array{
 	 *   data:                 array<int,string>,
-	 *   post_id_from_csv:     int,
+	 *   post_id_from_csv:     string,
 	 *   post_fields_from_csv: array<string,mixed>
 	 * }
 	 */
@@ -380,9 +380,9 @@ class FE_CSV_Import_Export_Import_Row_Context {
 	 * @param wpdb   $wpdb WordPress database handler.
 	 * @param string $update_existing Update flag from request.
 	 * @param string $post_type Post type.
-	 * @param int    $post_id_from_csv Post ID value from CSV.
+	 * @param string $post_id_from_csv Post ID value from CSV (may be empty).
 	 * @return array{
-	 *   post_id:   int,
+	 *   post_id:   int|null,
 	 *   is_update: bool
 	 * }
 	 */
@@ -390,13 +390,13 @@ class FE_CSV_Import_Export_Import_Row_Context {
 		wpdb $wpdb,
 		string $update_existing,
 		string $post_type,
-		int $post_id_from_csv
+		string $post_id_from_csv
 	): array {
 		$existing = $this->resolve_existing_post_for_import(
 			$wpdb,
 			$update_existing,
 			$post_type,
-			(string) $post_id_from_csv
+			$post_id_from_csv
 		);
 
 		return [
