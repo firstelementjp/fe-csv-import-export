@@ -1,0 +1,1 @@
+Fixed drag & drop file selection and empty-ID import errors
