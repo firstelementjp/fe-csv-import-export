@@ -4,7 +4,7 @@ Tags: csv, import, export, custom post types, custom fields
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,6 +134,11 @@ No. The free version works on its own. A Pro version is available separately for
 4. License management and Pro version features
 
 == Changelog ==
+
+= 1.1.1 =
+
+* **Fixed "No file selected" error after drag-and-drop file selection** - Dropped CSV files are now registered on the file input, and the selection is kept after an import completes so a real import can follow a Dry Run.
+* **Fixed a fatal error when the CSV ID column is empty** - Create-mode imports and Dry Runs no longer crash on blank ID cells.
 
 = 1.1.0 =
 

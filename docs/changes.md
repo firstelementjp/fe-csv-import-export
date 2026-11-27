@@ -1,5 +1,14 @@
 # 📋 Changelog
 
+## [1.1.1] - 2026-11-27
+
+### 🐛 Bug Fixes
+
+- **Fixed "No file selected" error after drag-and-drop file selection** - Dropping a CSV onto the upload area now registers the file on the file input instead of only updating the display, so imports started after a drag-and-drop no longer fail. The selected file is also kept after an import completes, so a real import can follow a Dry Run without re-selecting the file.
+- **Fixed a fatal error when the CSV ID column is empty** - Create-mode imports and Dry Runs no longer crash with a TypeError when the `ID` column is blank.
+
+---
+
 ## [1.1.0] - 2026-11-23
 
 ### ✨ New Features
